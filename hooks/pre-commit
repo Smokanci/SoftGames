@@ -1,0 +1,108 @@
+#!/bin/sh
+# Hard-ban guard for the conventions in .claude/rules/code-conventions.md that
+# nothing else enforces. Scans ONLY newly-added lines in the staged diff, so
+# pre-existing code never blocks a commit — only newly-introduced violations do.
+#
+# Escape hatches:
+#   - trailing "SG-ALLOW" comment on a line  -> that one line is exempt
+#   - git commit --no-verify                 -> skip the whole hook
+
+fail=0
+# ACMR, not ACM: a rename (R) still carries newly-added lines, and skipping it
+# lets violations in renamed files walk straight through.
+cs_files=$(git diff --cached --name-only --diff-filter=ACMR -- '*.cs')
+
+# Every file list below is newline-separated. Without this, a path containing a
+# space splits into two bogus paths and every check on it silently no-ops —
+# enforcement that quietly stops enforcing is worse than no hook at all.
+IFS='
+'
+
+# added_lines <file> -> the '+' lines of the staged diff, minus the +++ header
+# and any line the author marked SG-ALLOW.
+added_lines() {
+  git diff --cached -U0 -- "$1" | grep '^+' | grep -v '^+++' | grep -v 'SG-ALLOW'
+}
+
+report() {
+  # $1 = file, $2 = message, $3 = matching lines
+  echo "[pre-commit] BLOCKED: $2"
+  echo "  $1:"
+  printf '%s\n' "$3" | sed 's/^+/    /'
+  fail=1
+}
+
+# wired_idents <file> -> identifiers that are expected to be wired and so must
+# not be null-guarded. Reads the STAGED content so declarations added in this
+# same commit are seen. The implementation is shared with the edit-time guard
+# (hooks/claude-cs-guard.sh) so the two can't drift on what counts as wired.
+SCANNER="$(git rev-parse --show-toplevel)/hooks/wired-idents.sh"
+if [ ! -f "$SCANNER" ]; then
+  # Without this the scanner's absence looks identical to "this file has no wired
+  # refs" and the null-guard ban silently stops being enforced.
+  echo "[pre-commit] BLOCKED: hooks/wired-idents.sh is missing — the null-guard ban"
+  echo "             cannot be checked. Restore it or commit with --no-verify."
+  exit 1
+fi
+
+wired_idents() {
+  sh "$SCANNER" "$1" staged
+}
+
+for f in $cs_files; do
+  added=$(added_lines "$f")
+  [ -z "$added" ] && continue
+
+  hit=$(printf '%s\n' "$added" | grep -E 'DontDestroyOnLoad')
+  [ -n "$hit" ] && report "$f" "DontDestroyOnLoad — persistent services live in the bootstrap scene, not behind DDOL" "$hit"
+
+  # Defensive null guard on a ref that should be wired. The guard doesn't prevent
+  # the failure, it hides it — the component silently no-ops instead of naming the
+  # broken wire. Legitimate nullable cases (lazy-init, documented sentinels,
+  # optional parameters, OnValidate tolerance, unpublished SOAP refs) take an
+  # SG-ALLOW comment. Validating network/parse results is NOT covered by this ban.
+  # All three spellings count: "x == null", "null != x", and "x?." / "x ??" —
+  # the null-conditional reads as idiomatic C# and is the form that slips through
+  # review. "\?[.?]" can't match a ternary, whose "?" is followed by whitespace.
+  idents=$(wired_idents "$f" | paste -sd'|' -)
+  if [ -n "$idents" ]; then
+    hit=$(printf '%s\n' "$added" | grep -E "(^|[^A-Za-z0-9_])($idents)[[:space:]]*([!=]=[[:space:]]*null|\?[.?])|null[[:space:]]*[!=]=[[:space:]]*($idents)([^A-Za-z0-9_]|$)")
+    [ -n "$hit" ] && report "$f" "null guard on a wired ref (serialized field / GetComponent result) — let the NullReferenceException surface" "$hit"
+  fi
+done
+
+# An added asset without its .meta, or a .meta with no asset. Meta files are
+# source: the GUID lives there, so splitting the pair breaks every reference to
+# the asset silently — no error, just a null ref in some scene weeks later.
+tracked_or_staged() {
+  git ls-files --error-unmatch -- "$1" >/dev/null 2>&1
+}
+
+for a in $(git diff --cached --name-only --diff-filter=A -- 'Assets/*'); do
+  case "$a" in
+    *.meta)
+      base=${a%.meta}
+      # A folder's .meta has no file counterpart — git doesn't track directories.
+      [ -d "$base" ] && continue
+      tracked_or_staged "$base" || {
+        echo "[pre-commit] BLOCKED: orphaned .meta, its asset is not staged: $a"
+        fail=1
+      }
+      ;;
+    *)
+      tracked_or_staged "$a.meta" || {
+        echo "[pre-commit] BLOCKED: asset staged without its .meta: $a"
+        fail=1
+      }
+      ;;
+  esac
+done
+
+if [ "$fail" -ne 0 ]; then
+  echo ""
+  echo "[pre-commit] Blocked by the hard-ban guard (.claude/rules/code-conventions.md)."
+  echo "             Fix the above, add a trailing 'SG-ALLOW' comment for a justified"
+  echo "             exception, or bypass the whole hook with 'git commit --no-verify'."
+  exit 1
+fi
+exit 0

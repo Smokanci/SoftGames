@@ -1,0 +1,72 @@
+{
+  "permissions": {
+    "allow": [
+      "ReadMcpResourceTool",
+      "mcp__UnityMCP__read_console",
+      "mcp__UnityMCP__find_gameobjects",
+      "mcp__UnityMCP__get_test_job",
+      "mcp__UnityMCP__set_active_instance",
+      "mcp__ide__getDiagnostics"
+    ],
+    "deny": [
+      "Edit(**/*.unity)",
+      "Write(**/*.unity)",
+      "Read(**/*.meta)",
+      "Read(Library/**)",
+      "Edit(Library/**)",
+      "Write(Library/**)",
+      "Read(Temp/**)",
+      "Edit(Temp/**)",
+      "Write(Temp/**)",
+      "Read(UserSettings/**)",
+      "Edit(UserSettings/**)",
+      "Write(UserSettings/**)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/hooks/claude-cs-guard.sh\"",
+            "timeout": 30,
+            "statusMessage": "Checking hard bans"
+          },
+          {
+            "type": "mcp_tool",
+            "server": "UnityMCP",
+            "tool": "read_console",
+            "input": { "action": "get", "types": ["error"], "count": "20", "format": "plain" },
+            "if": "Edit(**/*.cs)",
+            "timeout": 60,
+            "statusMessage": "Reading Unity console"
+          },
+          {
+            "type": "mcp_tool",
+            "server": "UnityMCP",
+            "tool": "read_console",
+            "input": { "action": "get", "types": ["error"], "count": "20", "format": "plain" },
+            "if": "Write(**/*.cs)",
+            "timeout": 60,
+            "statusMessage": "Reading Unity console"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__UnityMCP__script_apply_edits|mcp__UnityMCP__create_script|mcp__UnityMCP__apply_text_edits|mcp__UnityMCP__delete_script",
+        "hooks": [
+          {
+            "type": "mcp_tool",
+            "server": "UnityMCP",
+            "tool": "read_console",
+            "input": { "action": "get", "types": ["error"], "count": "20", "format": "plain" },
+            "timeout": 60,
+            "statusMessage": "Reading Unity console"
+          }
+        ]
+      }
+    ]
+  }
+}

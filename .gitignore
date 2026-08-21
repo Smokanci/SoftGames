@@ -34,6 +34,9 @@
 # Jetbrains Rider personal-layer settings
 *.DotSettings.user
 
+# Jetbrains Rider project directory
+/.idea/
+
 # Visual Studio cache directory
 .vs/
 
@@ -104,3 +107,14 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Gate ledgers are a working artifact of one task, not a deliverable.
+# A stale committed one reads as pending work nobody owes.
+/GATES.md
+/gates/
+
+# Gate evidence for the visual requirements. Same reasoning as the ledger above:
+# proof for one submission pass, not something a reader of the repo needs.
+# Kept out of Assets/ on purpose: Unity imports anything under Assets/ as a texture
+# asset with a .meta, and gate evidence is not project content.
+/[Ss]creenshots/
