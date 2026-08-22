@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Cross-cutting requirements that apply to all three: an in-game menu is the only entry point to each task, layout is responsive on mobile and desktop, an FPS readout sits in the top-left corner, and the whole thing ships as a hosted WebGL build linked from `README.md`.
 
-**Status: the shell runs; Ace of Shadows and Magic Words are built. Phoenix Flame is a stub.** Created from the **Universal 2D** template — `Assets/Settings/Renderer2D.asset` is the renderer. The *Intended shape* section below describes code that exists: the bootstrap scene, additive load/unload, the SOAP channels it talks over, and the three assemblies are all in place, and the menu reaches all three task scenes. `PhoenixFlame.unity` carries only `Assets/Prefabs/TaskChrome.prefab`. `Assets/Scripts/SOAP/` holds a runtime subset ported from Kuiper-Prospector.
+**Status: all three tasks are built and verified in play mode.** Created from the **Universal 2D** template — `Assets/Settings/Renderer2D.asset` is the renderer. The *Intended shape* section below describes code that exists: the bootstrap scene, additive load/unload, the SOAP channels it talks over, and the three assemblies are all in place, and the menu reaches all three task scenes. `Assets/Scripts/SOAP/` holds a runtime subset ported from Kuiper-Prospector.
 
 On scene templates: `Lit2DSceneTemplate.scenetemplate` is the right base for a scene authored in the Editor UI, but `manage_scene create` over MCP cannot use it — see the MCP notes under *Working with this codebase*. The scenes here were made from its fixed template list, which is adequate because only `Bootstrap.unity` holds a camera; a task scene that needs 2D lights has to gain them by hand.
 
@@ -35,6 +35,7 @@ Deep system-specific documentation is colocated with each subsystem and **loads 
 - `Assets/Scripts/Bootstrap/CLAUDE.md` — the persistent scene's contract: what a task scene may not bring, the SOAP scene-swap channels, the ordering a task scene can rely on, and the FPS model/view seam.
 - `Assets/Scripts/AceOfShadows/CLAUDE.md` — the three-place card model and why it exists, the camera-derived layout formula, card identity and sorting, the sprite sheet and the atlas that was abandoned, and the two SOAP channels this task uses.
 - `Assets/Scripts/MagicWords/CLAUDE.md` — the DTO-to-view pipeline, what every kind of missing data turns into, why the emoji arrive as a TMP sprite asset rather than a font asset, the avatar cache, the render-once invariant, and the one SOAP channel this task uses.
+- `Assets/Scripts/PhoenixFlame/CLAUDE.md` — why the cycle order lives in the animator graph, the animated-colour bridge into the emitters and its Constant-mode constraint, the four layers and their blend modes, the noise generator's two traps, the scene-local backdrop, and the one SOAP channel this task uses.
 
 Per-class internals and lookup tables go in a plain-`.md` sibling of the subsystem's `CLAUDE.md`, not inside it, and get indexed here too — siblings do not auto-load and are otherwise invisible from a cold session. The rule and its reasoning are in `.claude/rules/project-conventions.md`.
 

@@ -3,7 +3,7 @@
 > **Status:** built and verified in play mode. `Assets/Scenes/Bootstrap.unity` is build index 0 and
 > hosts everything in this folder. The menu and all three task scenes load additively on top of it.
 > `Assets/Scenes/AceOfShadows.unity` is built against the contract below and is the worked example of
-> it. The other two task scenes are still stubs carrying only `Assets/Prefabs/TaskChrome.prefab`.
+> it; the other two task scenes follow it.
 
 The bootstrap scene is loaded once and never unloaded. That is what lets session-wide services live
 in a normal scene instead of under `DontDestroyOnLoad`, which this project bans outright.

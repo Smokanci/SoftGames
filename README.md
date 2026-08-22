@@ -100,6 +100,43 @@ failed load means going back to the menu and re-entering. That keeps the task on
 instead of the re-entry guard, generation counter, and cache reset a retry button needs to be
 correct.
 
+### Phoenix Flame — the colour order lives in the graph, not in a switch
+
+**Decision: the animator controller owns the cycle.** Three states, one trigger, and a transition
+from each colour to the next — including the edge back to orange. The button raises an event, one
+method pulls the trigger, and nothing in C# knows how many colours there are or which follows which.
+Adding a fourth colour is an asset edit. The alternative — a `switch` that picks a colour and lerps
+it — would have made the animator controller decoration around code that was already doing the work,
+and the brief names the controller as the mechanism.
+
+**An `Animator` cannot drive a particle system's start colour, so one component bridges the two.**
+The clips animate an ordinary `Color` field; `FlameTint` multiplies it into each emitter's start
+colour every frame. The constraint this creates turned into the best part of the effect: a start
+colour only reaches particles that have yet to spawn, so a press does not repaint the fire. The new
+colour enters at the base and washes up over about one particle lifetime while the old one burns off
+the top, and the two hues are visibly stacked mid-blend. Which layers recolour is decided by which
+ones are listed on that component — the smoke is left off the list, so it holds its own colour at
+every hue.
+
+**Four hand-tuned layers on the built-in particle system, not VFX Graph.** VFX Graph runs its
+simulation on compute shaders, which WebGL does not give you; the built-in system is the one that
+survives the target. The puff textures are drawn by a committed Python script the same way the
+card sheet is, white on transparent, so every colour on screen comes from runtime tint. Additive
+blending on the three fire layers is what makes the core go white-hot without a second colour
+anywhere in the setup.
+
+**The scene brings its own grey backdrop.** The app's shared background is a mid blue, and a blue
+flame on it is barely legible — which would hide a third of what this task is graded on. Grey is the
+neutral all three hues read against, and it is what makes the smoke visible, since smoke is drawn
+dark over a light ground rather than bright over a dark one. The backdrop is a sprite inside the task
+scene, so the other
+two keep the shared look.
+
+**No EditMode test here, on purpose.** There is no plain-C# model to drive: the cycle *is* the
+controller graph. The PlayMode test presses the real button three times and asserts the animator
+settles on green, then blue, then orange again, and that each state's colour actually reached the
+emitters — which is the brief's requirement stated as an assertion.
+
 ## Running it
 
 Open the project in the editor version pinned in `ProjectSettings/ProjectVersion.txt`. A mismatched
@@ -114,11 +151,13 @@ git config core.hooksPath hooks
 
 ## Tests
 
-EditMode tests cover the pure logic. `Assets/Tests/PlayMode/` holds two tests that need a running
-player: one boots the bootstrap scene and checks the menu loads on top of it rather than replacing
-it, and one enters Magic Words, leaves again while the fetch is still in flight, and fails if a
-cancelled request resumes into the unloaded scene. Between them they cover the additive-load contract
-the whole shell rests on, and the teardown path every task inherits from it. Run them from
+EditMode tests cover the pure logic. `Assets/Tests/PlayMode/` holds the three tests that need a
+running player: one boots the bootstrap scene and checks the menu loads on top of it rather than
+replacing it; one enters Magic Words, leaves again while the fetch is still in flight, and fails if a
+cancelled request resumes into the unloaded scene; and one walks the Phoenix Flame colour cycle
+through the real button and asserts it loops back to orange. Between them they cover the
+additive-load contract the whole shell rests on, the teardown path every task inherits from it, and
+the one task whose behaviour lives in an asset rather than in code. Run them from
 **Window → General → Test Runner**, or headlessly with the editor closed:
 
 ```bash
