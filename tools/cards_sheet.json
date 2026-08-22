@@ -1,0 +1,98 @@
+{
+  "texture": "Assets/Art/Cards/cards_sheet.png",
+  "width": 1056,
+  "height": 1160,
+  "sprites": [
+    {
+      "name": "card_body",
+      "x": 4,
+      "y": 798,
+      "w": 256,
+      "h": 358
+    },
+    {
+      "name": "glyph_circle",
+      "x": 4,
+      "y": 534,
+      "w": 256,
+      "h": 256
+    },
+    {
+      "name": "glyph_ring",
+      "x": 268,
+      "y": 534,
+      "w": 256,
+      "h": 256
+    },
+    {
+      "name": "glyph_square",
+      "x": 532,
+      "y": 534,
+      "w": 256,
+      "h": 256
+    },
+    {
+      "name": "glyph_diamond",
+      "x": 796,
+      "y": 534,
+      "w": 256,
+      "h": 256
+    },
+    {
+      "name": "glyph_triangle",
+      "x": 4,
+      "y": 270,
+      "w": 256,
+      "h": 256
+    },
+    {
+      "name": "glyph_chevron",
+      "x": 268,
+      "y": 270,
+      "w": 256,
+      "h": 256
+    },
+    {
+      "name": "glyph_hexagon",
+      "x": 532,
+      "y": 270,
+      "w": 256,
+      "h": 256
+    },
+    {
+      "name": "glyph_spiral",
+      "x": 796,
+      "y": 270,
+      "w": 256,
+      "h": 256
+    },
+    {
+      "name": "glyph_star4",
+      "x": 4,
+      "y": 6,
+      "w": 256,
+      "h": 256
+    },
+    {
+      "name": "glyph_crescent",
+      "x": 268,
+      "y": 6,
+      "w": 256,
+      "h": 256
+    },
+    {
+      "name": "glyph_bolt",
+      "x": 532,
+      "y": 6,
+      "w": 256,
+      "h": 256
+    },
+    {
+      "name": "glyph_droplet",
+      "x": 796,
+      "y": 6,
+      "w": 256,
+      "h": 256
+    }
+  ]
+}

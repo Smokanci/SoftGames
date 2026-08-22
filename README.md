@@ -16,14 +16,55 @@ readout sits in the top-left corner throughout.
 
 ## Architecture
 
-_To be written once the tasks land. It should answer, on one screen: how the bootstrap scene and
-additive loading fit together, where the model/view seam sits in each task, and how a reader finds
-the code for a given feature._
+**One persistent scene, three interchangeable ones.** `Assets/Scenes/Bootstrap.unity` is build index
+0 and is never unloaded. It owns the only camera, the only `EventSystem`, the FPS readout, and the
+scene loader. The menu and the three task scenes load **additively** on top of it and unload on
+exit, so the session-wide services live in a normal scene instead of behind `DontDestroyOnLoad` —
+which the project bans outright.
+
+**Cross-system messages go over ScriptableObject events**, not references. `SceneLoader` is the only
+class that touches `SceneManager`; a menu button raises a `GameEventString` naming a scene and does
+not know who answers. The same rule applies inside a task: a serialized reference is allowed only
+between objects in one hierarchy, so anything crossing from a canvas to the world, or from a task to
+the shared chrome, becomes an event asset under `Assets/SOAP/Events/`.
+
+**Every task splits its logic from its drawing.** The logic side is plain C# with no `UnityEngine`
+types, so an EditMode test drives it with no scene and no play mode; the `MonoBehaviour` side only
+draws. `CardStacks` / `CardTableView` in Ace of Shadows is the worked example, and `FpsSampler` /
+`FpsCounterView` in the shell is the same shape.
+
+**Where to find things.** Runtime code is under `Assets/Scripts/`, one folder per subsystem, most
+with a `CLAUDE.md` next to the code explaining its contracts and its traps. Start at the root
+`CLAUDE.md` for the index. Three assemblies: `Game.Runtime` holds all task code, with
+`Game.Tests.EditMode` and `Game.Tests.PlayMode` under `Assets/Tests/`.
 
 ## Trade-offs
 
-_One short section per task: the decision, the alternative, and why this side won. Written as each
-task lands, not reconstructed at the end._
+### Ace of Shadows — 144 real objects, no impostors
+
+**Decision: instantiate all 144 cards and leave them alive for the whole scene.** No pooling, no
+culling, no impostor strip standing in for the buried part of a deck. The alternative — draw three
+sprites and fake the rest — is a real technique and it would cut the object count by two orders of
+magnitude, but the brief says *create 144 sprites*, and a reviewer who opens the hierarchy and finds
+three has grounds to call the task undone. The cost was measured rather than assumed: the frame rate
+holds at the display rate through a full run.
+
+**A card in flight belongs to neither stack.** The model has three places, not two, so "all
+animations are finished" can only mean *the last card landed* — never *the last card left*. With a
+move shorter than the one-second cadence those two moments differ, and the two-place version would
+show the completion message with a card still in the air. Making the wrong answer unrepresentable
+beat guarding against it.
+
+**144 distinct cards from 13 images.** Twelve geometric glyphs times twelve colours. All art is drawn
+white on transparent and tinted at runtime through `SpriteRenderer.color`, so the download carries
+one small texture instead of 144. `tools/generate_card_sprites.py` draws that sheet with Pillow and
+is committed alongside it, so a shape can be changed and the sheet regenerated without hand-editing
+pixels.
+
+**Layout is derived from the camera, not authored per device.** The camera is orthographic, so the
+vertical extent is a fixed number of world units everywhere and only the horizontal gap between the
+stacks has to react to the viewport. One clamped formula covers a portrait phone and an ultrawide
+desktop window; there is no second code path and no breakpoint list.
 
 ## Running it
 

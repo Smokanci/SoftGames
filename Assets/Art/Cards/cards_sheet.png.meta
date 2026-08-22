@@ -1,0 +1,550 @@
+fileFormatVersion: 2
+guid: f9bb23e31de43492481ecb3d10a5521a
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2277840038149140721
+    second: cards_sheet_0
+  - first:
+      213: -2228409524480070760
+    second: cards_sheet_1
+  - first:
+      213: -6328729794274927009
+    second: cards_sheet_2
+  - first:
+      213: 4610715493512869572
+    second: cards_sheet_3
+  - first:
+      213: -8162378000834642595
+    second: cards_sheet_4
+  - first:
+      213: -4830146356574687049
+    second: cards_sheet_5
+  - first:
+      213: -8541879949310719380
+    second: cards_sheet_6
+  - first:
+      213: -8785612914122357432
+    second: cards_sheet_7
+  - first:
+      213: 1236063355797780585
+    second: cards_sheet_8
+  - first:
+      213: -134879410873910046
+    second: cards_sheet_9
+  - first:
+      213: 1174543522953655567
+    second: cards_sheet_10
+  - first:
+      213: -8793365566072099108
+    second: cards_sheet_11
+  - first:
+      213: 9127180855373601801
+    second: cards_sheet_12
+  - first:
+      213: -5090435144538389193
+    second: cards_sheet_13
+  - first:
+      213: -9045279455486645326
+    second: card_body
+  - first:
+      213: -6163681253200518739
+    second: glyph_circle
+  - first:
+      213: 3568319399664497364
+    second: glyph_ring
+  - first:
+      213: -7703031402742085107
+    second: glyph_square
+  - first:
+      213: -5470666607251637145
+    second: glyph_diamond
+  - first:
+      213: 5462261035498291535
+    second: glyph_triangle
+  - first:
+      213: 3651980460266765131
+    second: glyph_chevron
+  - first:
+      213: -2478154243117666573
+    second: glyph_hexagon
+  - first:
+      213: -3409635569215123061
+    second: glyph_spiral
+  - first:
+      213: 5394519130002270115
+    second: glyph_star4
+  - first:
+      213: -6187977552235819878
+    second: glyph_crescent
+  - first:
+      213: 8081927630832227651
+    second: glyph_bolt
+  - first:
+      213: -2233017994319514390
+    second: glyph_droplet
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 256
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: 51
+    textureCompression: 1
+    compressionQuality: 100
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: 12
+    textureCompression: 1
+    compressionQuality: 100
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: 51
+    textureCompression: 1
+    compressionQuality: 100
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: card_body
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 798
+        width: 256
+        height: 358
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2bb64995246b87280800000000000000
+      internalID: -9045279455486645326
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyph_circle
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 534
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da1af3a8e84367aa0800000000000000
+      internalID: -6163681253200518739
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyph_ring
+      rect:
+        serializedVersion: 2
+        x: 268
+        y: 534
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d233269697358130800000000000000
+      internalID: 3568319399664497364
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyph_square
+      rect:
+        serializedVersion: 2
+        x: 532
+        y: 534
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d0a01e960c5591590800000000000000
+      internalID: -7703031402742085107
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyph_diamond
+      rect:
+        serializedVersion: 2
+        x: 796
+        y: 534
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76cbc2e94b94414b0800000000000000
+      internalID: -5470666607251637145
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyph_triangle
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 270
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f414553b879ddcb40800000000000000
+      internalID: 5462261035498291535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyph_chevron
+      rect:
+        serializedVersion: 2
+        x: 268
+        y: 270
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4b3edc21e07ea230800000000000000
+      internalID: 3651980460266765131
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyph_hexagon
+      rect:
+        serializedVersion: 2
+        x: 532
+        y: 270
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3fe285088d3db9dd0800000000000000
+      internalID: -2478154243117666573
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyph_spiral
+      rect:
+        serializedVersion: 2
+        x: 796
+        y: 270
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b81556bc38a8ea0d0800000000000000
+      internalID: -3409635569215123061
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyph_star4
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 6
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a7a5dd319e2dda40800000000000000
+      internalID: 5394519130002270115
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyph_crescent
+      rect:
+        serializedVersion: 2
+        x: 268
+        y: 6
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a9c84e89333ef1aa0800000000000000
+      internalID: -6187977552235819878
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyph_bolt
+      rect:
+        serializedVersion: 2
+        x: 532
+        y: 6
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3455b204c56c82070800000000000000
+      internalID: 8081927630832227651
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: glyph_droplet
+      rect:
+        serializedVersion: 2
+        x: 796
+        y: 6
+        width: 256
+        height: 256
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae4b78717f9b201e0800000000000000
+      internalID: -2233017994319514390
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      card_body: -9045279455486645326
+      cards_sheet_0: -2277840038149140721
+      cards_sheet_1: -2228409524480070760
+      cards_sheet_10: 1174543522953655567
+      cards_sheet_11: -8793365566072099108
+      cards_sheet_12: 9127180855373601801
+      cards_sheet_13: -5090435144538389193
+      cards_sheet_2: -6328729794274927009
+      cards_sheet_3: 4610715493512869572
+      cards_sheet_4: -8162378000834642595
+      cards_sheet_5: -4830146356574687049
+      cards_sheet_6: -8541879949310719380
+      cards_sheet_7: -8785612914122357432
+      cards_sheet_8: 1236063355797780585
+      cards_sheet_9: -134879410873910046
+      glyph_bolt: 8081927630832227651
+      glyph_chevron: 3651980460266765131
+      glyph_circle: -6163681253200518739
+      glyph_crescent: -6187977552235819878
+      glyph_diamond: -5470666607251637145
+      glyph_droplet: -2233017994319514390
+      glyph_hexagon: -2478154243117666573
+      glyph_ring: 3568319399664497364
+      glyph_spiral: -3409635569215123061
+      glyph_square: -7703031402742085107
+      glyph_star4: 5394519130002270115
+      glyph_triangle: 5462261035498291535
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
