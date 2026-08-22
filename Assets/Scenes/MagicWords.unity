@@ -156,8 +156,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 80}
-  m_SizeDelta: {x: -80, y: -640}
+  m_AnchoredPosition: {x: 0, y: 15}
+  m_SizeDelta: {x: -80, y: -362}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &50012230
 MonoBehaviour:
@@ -200,6 +200,8 @@ MonoBehaviour:
   content: {fileID: 1215404569}
   rowPrefab: {fileID: 5191842858041113895, guid: 7ab753aeb99a2481eaab49f9c294e4cb, type: 3}
   avatars: {fileID: 50012232}
+  charactersPerSecond: 40
+  secondsBetweenLines: 0.4
 --- !u!114 &50012232
 MonoBehaviour:
   m_ObjectHideFlags: 0
