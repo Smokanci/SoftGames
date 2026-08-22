@@ -1,0 +1,164 @@
+# Magic Words
+
+> **Status:** built and verified in play mode. `Assets/Scenes/MagicWords.unity` fetches the endpoint,
+> renders the conversation with colour emoji and circular avatars, and falls back to initials for the
+> one speaker the avatar list never names. Every banner state — loading, loaded, empty, unreadable,
+> failed — was driven on screen, and the dead-URL fallback was driven from a local payload carrying a
+> refused host, a 4xx, and a 200 that is not an image. `EmojiVocabularyTests.cs` and `DialogueScriptTests.cs` cover the model headlessly,
+> and `Assets/Tests/PlayMode/MagicWordsExitTests.cs` covers leaving the task while the fetch is in flight.
+> Tuned values live in the scene, not here: the endpoint, its timeout and the banner wording sit on
+> `MagicWordsRunner`, the avatar timeout on `AvatarLibrary`.
+
+The brief: *"Create a system that combines text and Unicode emojis to render character dialogue using
+data from the endpoint below. Load the data dynamically at runtime and handle cases where avatar URLs
+may not load or data is missing."*
+
+## The pipeline, in one line each
+
+`MagicWordsResponse` → `DialogueScript` → `DialogueLine` → `DialogueRowView`.
+
+- **`MagicWordsDto.cs`** — what `JsonUtility` fills. Field names are the endpoint's keys and cannot be
+  renamed. Every field here can arrive null or empty; nothing else in the task has to know that.
+- **`DialogueScript`** — plain C#, no Unity types beyond the DTO. Turns the raw payload into a list
+  that cannot be half-formed. This is the boundary the "validate input, don't guard wiring" rule in
+  `.claude/rules/csharp-conventions.md` is talking about.
+- **`DialogueLine`** — immutable, already substituted, already sided, already carries its initials.
+  A row view reads fields and sets them on components; it makes no decisions.
+- **`DialogueRowView` / `DialogueLogView`** — `MonoBehaviour`s that draw. No parsing, no HTTP.
+
+Both requests — the payload and each avatar — go through `WebRequests.SendAsync` in
+`Assets/Scripts/Common/`, which frame-polls the operation and takes the caller's
+`destroyCancellationToken`, so a scene unloaded mid-request stops there instead of resuming into a
+destroyed component. The cancellation throws out through `using var request`, so the request object
+is disposed on the way. Whether the browser then aborts the underlying fetch is untested — the
+guarantee this task rests on is that nothing resumes into the unloaded scene, not that the socket
+closes. `UnityWebRequestTexture` needs `com.unity.modules.unitywebrequesttexture`, which the manifest
+pulls in for this task alone.
+
+**A missed cancellation is invisible until it is not.** It produces no wrong value — it resumes a
+continuation inside a destroyed component, seconds later, once the request finally answers. That is
+why `MagicWordsExitTests` waits well past the scene swap before it passes: the exception it watches
+for arrives on network time, not on a frame count, and one that lands after the test returns gets
+blamed on whatever ran next.
+
+`DialogueScript.FromResponse` is a static method rather than a constructor because the empty result
+is a real answer, and `DialogueScript.Empty` is what both a null response and an unparseable body
+become.
+
+## What each missing thing turns into
+
+The live payload only exercises two of these — a speaker with no avatar record, and a name listed
+twice. The rest are covered by the fixture in `DialogueScriptTests.cs`, which is shaped like the
+endpoint and adds the cases it does not carry.
+
+| Gap in the data | What the player sees |
+| --- | --- |
+| Entry has no `text` | The entry is dropped. A speaker bubble with nothing in it is noise. |
+| Entry has no `name` | The line renders; the speaker label is switched off. |
+| Speaker has no avatar record | Initials in a circle, on the left. |
+| Avatar `position` missing or unrecognised | Left. `Left` is the default, `"right"` is the opt-in. |
+| Avatar URL 404s, refuses, or returns non-image | Initials in a circle. `AvatarLibrary` never tells the row *which* failure it was. |
+| `{token}` not in the emoji table | Left in the text with its braces, so the gap is visible. |
+| Body is not JSON at all | Its own banner message, carrying the parse error. |
+| Body is valid JSON with no lines | A different banner message, so the two are not confusable. |
+| Request fails or times out | Banner carries `UnityWebRequest.error`. |
+
+**A repeated avatar name keeps the first record.** The payload names one character twice with two
+different URLs, the second of which is broken. Nothing makes a later record more trustworthy than the
+one before it, so the second is dropped and never fetched. Reversing that rule is a one-line change in
+`DialogueScript.IndexAvatars` and would cost one wasted request per repeated name.
+
+**A consequence worth knowing: the running demo never fires the dead-URL fallback.** Both broken URLs
+in the payload sit on records nothing reaches — one belongs to a name that never speaks, the other to
+the dropped duplicate. The initials circle on screen comes from the speaker with no avatar record at
+all. The dead-URL path is real and covered, but it is not visible from the build.
+
+## Emoji: a sprite asset, not a font asset
+
+The model emits **real Unicode characters** — `EmojiVocabulary.Substitute` swaps `{token}` for the
+codepoint, and no TMP markup ever enters the model. That keeps the substitution testable with a plain
+string compare and keeps the view the only thing that knows TMP exists.
+
+TMP resolves those characters through `TMP Settings → Default Sprite Asset`, which this project points
+at `Assets/Art/Emoji/EmojiSpriteAsset.asset`. **That setting is load-bearing**: clear it and the emoji
+render as missing-glyph boxes while everything else still works.
+
+The route to that asset was not the obvious one:
+
+- The stock EmojiOne sprite asset TMP ships holds a small fixed set of smileys, none of which the
+  payload asks for.
+- Noto Color Emoji is a **CBDT/CBLC** font — every glyph is a PNG, not an outline. TMP's font-asset
+  pipeline loads glyphs with FreeType's no-bitmap flag, so `TryAddCharacters` reports every codepoint
+  missing and bakes an empty atlas, with nothing in the console. Probing `FontEngine` directly
+  confirmed it: `TryGetGlyphWithUnicodeValue` succeeds under every load flag *except* `LOAD_NO_BITMAP`.
+  Rebuilding the atlas by hand is not possible from a script either — `TryPackGlyphsInAtlas` and
+  `RenderGlyphsToTexture` are both internal to Unity.
+- So the glyphs are lifted straight out of the font's bitmap table instead.
+  `tools/generate_emoji_sheet.py` reads `Assets/Art/Fonts/NotoColorEmoji-Subset.ttf` with fonttools,
+  writes `Assets/Art/Emoji/emoji_sheet.png`, and records the rects in `emoji_sheet.json`. The sheet is
+  committed, so a clone needs neither Python nor fonttools.
+
+To add an emoji: add it to the subset font's codepoint list, add it to `EMOJI` in the generator, re-run
+the generator, then extend the sprite asset's character and glyph tables to match `emoji_sheet.json`.
+Add the `{token}` for it to `Assets/Data/EmojiTable.asset`.
+
+`EmojiTable` is a `ScriptableObject` rather than a `Dictionary` in code because the endpoint names an
+*emotion* and leaves the choice of glyph to the client, so which face means `intrigued` is a design
+decision, not a fact about the data.
+
+## Avatars
+
+`AvatarLibrary` fires **one request per distinct URL**, not one per row — a speaker has as many rows as
+they have lines and they all want the same image. A URL that fails is remembered as failed, so a dead
+link costs one request for the whole session rather than one per line.
+
+The portrait `Image` starts disabled with the initials showing, and `SetAvatar` swaps them. The
+initials hold the space either way, so a row never resizes when an image lands late.
+
+`request.timeout` is set explicitly. Without it an unreachable host holds the row on its initials until
+the platform's own timeout expires, which on WebGL is the browser's and can run into minutes.
+
+Downloaded textures belong to no scene, so `OnDestroy` destroys each sprite and its texture by hand;
+unloading the scene does not take them.
+
+**The log renders once per scene load, and that invariant is load-bearing.** `Start` is the only
+caller of `MagicWordsRunner.Load`, so `DialogueLogView.Show` runs once and no second render can
+outrun the avatar downloads still in flight. A retry control cannot be added on its own — it needs
+three things with it: a re-entry guard on the fetch, a generation counter so a late avatar cannot
+write into destroyed rows, and a way to clear `AvatarLibrary`'s failure set so a dead URL is tried
+again. Recovering from a failed load today means leaving to the menu and
+re-entering, which reloads the scene.
+
+## Layout
+
+One `HorizontalLayoutGroup` per row, avatar and bubble. `DialogueRowView.Bind` flips
+`reverseArrangement` and both label alignments from the side; nothing else changes between the two
+sides.
+
+`childForceExpandWidth` on the row **must stay off**. It overrides a child's `LayoutElement`
+regardless of `flexibleWidth`, which stretched the avatar into an ellipse. The avatar pins its size
+with matching min and preferred values; the bubble asks for zero preferred width and takes all the
+flexible space, so the split is deterministic at any aspect. Verified at 2:1 landscape and 9:16
+portrait.
+
+The circle is `UI/Skin/Knob.psd` under a `Mask`, so the portrait and the initials are both clipped to
+it and neither needs a round sprite of its own.
+
+## SOAP, once
+
+`Assets/SOAP/Events/_TaskMessageRequested.asset` (`GameEventString`) is the only channel this task
+uses. The banner lives inside `TaskChrome.prefab`; the runner does not. **An empty string hides the
+banner**, so one channel carries loading, empty, unreadable, failed, and the all-clear. The failure
+messages take the reason as `{0}`, because a player build has no console to read it in — a message
+authored without the placeholder still renders, it just says less.
+
+Everything else here is a direct reference: runner → log view → row prefab, and `AvatarLibrary` sits on
+the same GameObject as the log view.
+
+## Two things that will bite
+
+- **`Awaitable` that nobody awaits swallows its exception.** Both fire-and-forget paths here —
+  `Load` in the runner and `FillAvatars` in the log view — catch and log for that reason alone. Delete
+  a `catch` and a failure becomes a loading banner that never goes away.
+- **The endpoint is a mock.** Its token set and its avatar hosts can change without notice, which is
+  why an unknown `{token}` stays visible instead of being dropped silently.

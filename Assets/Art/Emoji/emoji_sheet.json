@@ -1,0 +1,55 @@
+{
+  "texture": "Assets/Art/Emoji/emoji_sheet.png",
+  "width": 432,
+  "height": 272,
+  "sprites": [
+    {
+      "name": "satisfied",
+      "unicode": "1F60C",
+      "x": 4,
+      "y": 140,
+      "w": 136,
+      "h": 128
+    },
+    {
+      "name": "intrigued",
+      "unicode": "1F928",
+      "x": 148,
+      "y": 140,
+      "w": 136,
+      "h": 128
+    },
+    {
+      "name": "neutral",
+      "unicode": "1F610",
+      "x": 292,
+      "y": 140,
+      "w": 136,
+      "h": 128
+    },
+    {
+      "name": "affirmative",
+      "unicode": "1F44D",
+      "x": 4,
+      "y": 4,
+      "w": 136,
+      "h": 128
+    },
+    {
+      "name": "laughing",
+      "unicode": "1F602",
+      "x": 148,
+      "y": 4,
+      "w": 136,
+      "h": 128
+    },
+    {
+      "name": "win",
+      "unicode": "1F3C6",
+      "x": 292,
+      "y": 4,
+      "w": 136,
+      "h": 128
+    }
+  ]
+}

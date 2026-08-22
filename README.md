@@ -66,6 +66,40 @@ vertical extent is a fixed number of world units everywhere and only the horizon
 stacks has to react to the viewport. One clamped formula covers a portrait phone and an ultrawide
 desktop window; there is no second code path and no breakpoint list.
 
+### Magic Words — every gap in the data has one defined answer
+
+**Decision: the parse decides, the view only draws.** `DialogueScript.FromResponse` turns the raw
+payload into lines that cannot be half-formed — token already substituted, side already resolved,
+initials already computed — so a row view sets fields on components and makes no decisions of its
+own. Each kind of missing data gets one answer, written once: an entry with no words is dropped, an
+entry with no name renders without a speaker label, an unknown speaker sits on the left, and a name
+the payload lists twice keeps its first record and never fetches the second. That is what makes the
+degrading behaviour testable in EditMode with no scene and no network.
+
+**Emoji are real Unicode characters, rendered through a TMP sprite asset.** The model emits the
+codepoint and no TMP markup, so the substitution is a plain string comparison in a test. Getting
+those codepoints on screen in colour took the longer road: Noto Color Emoji stores every glyph as a
+PNG, and TextMeshPro's font-asset pipeline loads glyphs with FreeType's no-bitmap flag, so it reads
+that font as empty and bakes a blank atlas without a word in the console. The supported route is a
+sprite asset, so `tools/generate_emoji_sheet.py` lifts the bitmaps straight out of the font and lays
+them out as a sheet. It is committed next to the sheet it produces, the same as the card generator.
+Noto Color Emoji is under the SIL Open Font License, and the licence travels with the subset in
+`Assets/Art/Fonts/`.
+
+**A missing avatar becomes the speaker's initials in a circle**, not a placeholder image and not an
+empty gap. The initials render first and the portrait replaces them when it arrives, so a row never
+resizes when an image lands late and a dead URL is simply a row that never changes. Each distinct URL
+is fetched once and a failure is remembered, so a broken link costs one request for the session
+rather than one per line that speaker has, and every request carries an explicit timeout — WebGL
+otherwise inherits the browser's, which can run to minutes.
+
+**The conversation appears at once, in a scroll view.** A typewriter reveal would look livelier, but
+the brief asks for nothing timed here, and a timed reveal would put the failure banner behind a wait.
+There is no retry control either: the fetch runs once when the scene opens, so recovering from a
+failed load means going back to the menu and re-entering. That keeps the task on one code path
+instead of the re-entry guard, generation counter, and cache reset a retry button needs to be
+correct.
+
 ## Running it
 
 Open the project in the editor version pinned in `ProjectSettings/ProjectVersion.txt`. A mismatched
@@ -80,10 +114,12 @@ git config core.hooksPath hooks
 
 ## Tests
 
-EditMode tests cover the pure logic. `Assets/Tests/PlayMode/` holds a smoke test that boots the
-bootstrap scene and checks the menu loads on top of it rather than replacing it — the additive-load
-contract the whole shell rests on. Run them from **Window → General → Test Runner**, or headlessly
-with the editor closed:
+EditMode tests cover the pure logic. `Assets/Tests/PlayMode/` holds two tests that need a running
+player: one boots the bootstrap scene and checks the menu loads on top of it rather than replacing
+it, and one enters Magic Words, leaves again while the fetch is still in flight, and fails if a
+cancelled request resumes into the unloaded scene. Between them they cover the additive-load contract
+the whole shell rests on, and the teardown path every task inherits from it. Run them from
+**Window → General → Test Runner**, or headlessly with the editor closed:
 
 ```bash
 U="/Applications/Unity/Hub/Editor/$(awk '/^m_EditorVersion:/{print $2}' ProjectSettings/ProjectVersion.txt)/Unity.app/Contents/MacOS/Unity"; "$U" -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -testResults Logs/edit-results.xml
