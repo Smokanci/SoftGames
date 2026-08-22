@@ -281,6 +281,7 @@ GameObject:
   - component: {fileID: 1390181290}
   - component: {fileID: 1390181289}
   - component: {fileID: 1390181291}
+  - component: {fileID: 1390181292}
   m_Layer: 0
   m_Name: '[Services]'
   m_TagString: Untagged
@@ -300,7 +301,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be77e1d5e4cd45f2ac90c59b1d54178a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.Runtime::SceneLoader
-  loadSceneRequested: {fileID: 11400000, guid: 2046e64c7cf88477495054c458cbdde2, type: 2}
   isLoading: {fileID: 11400000, guid: 6b84160fb29d6423e875bb5066c6c9f0, type: 2}
   firstSceneName: Menu
 --- !u!4 &1390181290
@@ -330,6 +330,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eda4a9a252ae44249a5bad212d739398, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.Runtime::FrameRateCap
+--- !u!114 &1390181292
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1390181288}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6feeda4478a3854498e3abc6439a34f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SOAP.Runtime::GameEventListenerString
+  _GameEvent: {fileID: 11400000, guid: 2046e64c7cf88477495054c458cbdde2, type: 2}
+  _UnityEventResponse:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1390181289}
+        m_TargetAssemblyTypeName: SceneLoader, Game.Runtime
+        m_MethodName: LoadScene
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1832742110
 GameObject:
   m_ObjectHideFlags: 0

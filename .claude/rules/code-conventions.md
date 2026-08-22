@@ -15,6 +15,7 @@ all). A one-liner here is the ban, not the reasoning behind it.
 - **No defensive null checks** on refs that should be wired. Let `NullReferenceException` name the broken wire. Exactly five carve-outs exist — enumerated canonically in `csharp-conventions.md`; nothing else qualifies, and `?.` / `??` count as null checks.
 - **No `DontDestroyOnLoad`.** Session-wide services live in the persistent bootstrap scene.
 - **Prefer SOAP for cross-system comms.** Direct refs only for intra-system internals (a class talking to its own children/components).
+- **Never subscribe to a SOAP event in code.** Listening goes through a `GameEventListener*` component on the GameObject, wired in the inspector to a public method. No `EventListeners +=` outside `Assets/Scripts/SOAP/Runtime/`.
 - **One reason to change per class.** A single `.cs` past ~600 lines, or a `MonoBehaviour` whose serialized fields span 4+ unrelated `[Header]` groups, is a smell — extract a responsibility instead of adding the Nth parallel block.
 - **Comments say *why*, never *what*.** Drop a comment that narrates the line below it or traces how the code reaches its result. Keep the ones carrying a reason the code cannot state: a constraint, a rejected alternative, a platform quirk.
 - **`var` preference is enforced by `.editorconfig`.** Roslyn flags violations; not restated here.

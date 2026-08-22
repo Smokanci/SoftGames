@@ -153,6 +153,46 @@ null-conditional counts** — `_bake?.Release()` in an `OnDestroy` is the same b
 Default to SO events/variables when two systems that don't share a hierarchy need to talk; keep direct
 refs only for intra-system internals (a class talking to its own children/components).
 
+### Listen through the listener component, never in code
+
+A type that reacts to a SOAP event does **not** hold the `GameEvent*` asset and does **not** write
+`EventListeners += Handler`. It exposes a `public` method, and a `GameEventListener*` component on the
+same GameObject holds the event ref and calls that method through its inspector `UnityEvent`.
+
+```csharp
+✗  [SerializeField] private GameEventString messageRequested;
+✗  private void OnEnable()  { messageRequested.EventListeners += Show; }
+✗  private void OnDisable() { messageRequested.EventListeners -= Show; }
+✗  private void Show(string message) { ... }
+
+✓  public void Show(string message) { ... }
+✓  // GameEventListenerString on this GameObject: _GameEvent = the asset, response -> Show
+```
+
+The reason is that a code subscription is invisible from the scene. Selecting the GameObject shows no
+event ref, so nobody can tell what it listens to without opening the file, and a channel with no
+subscriber and a subscriber with no channel both look identical in the inspector — which is to say,
+they look like nothing at all. The listener component puts both halves on the GameObject where a
+reviewer, and Unity's own "Find References In Scene", can see them.
+
+Pick the concrete subclass that matches the payload — `GameEventListenerString`,
+`GameEventListenerVoid`, and the rest live one folder per type under
+`Assets/Scripts/SOAP/Runtime/Events/`. A `GameEventListenerVoid` response takes no argument; the
+typed ones pass their value dynamically.
+
+**The listener subscribes in `OnEnable`, so it must sit on a GameObject that is active when the event
+can fire.** A banner that switches *itself* off never re-subscribes. Put the listener on a parent that
+stays active and have its method toggle a child — `TaskMessageBanner` is the worked example.
+
+Two things this rule does not cover: **raising** is still a plain `evt.Raise(value)` call from code,
+and `Button.onClick.AddListener` is Unity UI, not SOAP.
+
+**Review-enforced**, plus a `grep` that finds every violation at once:
+
+```
+grep -rn "EventListeners" Assets/Scripts Assets/Tests | grep -v "Assets/Scripts/SOAP/Runtime"
+```
+
 ### No `DontDestroyOnLoad`
 
 Session-wide services (scene loader, FPS counter, global canvas) live in the persistent bootstrap

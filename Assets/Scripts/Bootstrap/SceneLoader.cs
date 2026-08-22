@@ -6,9 +6,8 @@ using UnityEngine.SceneManagement;
 // cannot hold a serialized ref to one that is.
 public sealed class SceneLoader : MonoBehaviour
 {
-    [SerializeField] private GameEventString loadSceneRequested;
-    [SerializeField] private BoolVariable    isLoading;
-    [SerializeField] private string          firstSceneName;
+    [SerializeField] private BoolVariable isLoading;
+    [SerializeField] private string       firstSceneName;
 
     private string _current;
 
@@ -17,17 +16,8 @@ public sealed class SceneLoader : MonoBehaviour
         _ = SwapTo(firstSceneName);
     }
 
-    private void OnEnable()
-    {
-        loadSceneRequested.EventListeners += OnLoadRequested;
-    }
-
-    private void OnDisable()
-    {
-        loadSceneRequested.EventListeners -= OnLoadRequested;
-    }
-
-    private void OnLoadRequested(string sceneName) => _ = SwapTo(sceneName);
+    // Called by the GameEventListenerString on this GameObject.
+    public void LoadScene(string sceneName) => _ = SwapTo(sceneName);
 
     // A second request while one is in flight would unload a scene that is still loading.
     private async Awaitable SwapTo(string sceneName)

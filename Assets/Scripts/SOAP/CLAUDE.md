@@ -25,6 +25,7 @@ Asset folders under `Assets/SOAP/` should mirror the runtime layout (`Events/`, 
 
 ## Gotchas
 
+- **Listening is a component, never a code subscription.** `EventListeners += Handler` is banned outside this folder — put a `GameEventListener*` on the GameObject and wire its `UnityEvent` to a `public` method. The rule and its reasoning are in `.claude/rules/csharp-conventions.md`. Raising stays a plain `Raise(value)` call.
 - **Logging is off by default.** `GameEvent.Raise` is `[Conditional("SOAP_DEBUG")]` — add `SOAP_DEBUG` to scripting defines to see raises.
 - **Variable reset is incomplete by design.** `BaseVariable.ResetAllInstances` runs at `RuntimeInitializeLoadType.BeforeSceneLoad` and resets only SOs already loaded. A variable referenced solely by a scene loaded later will not reset between play sessions. Either fix works here: **Player → Preloaded Assets**, or moving the asset under a `Resources/` folder as Kuiper does. This project carries no `Resources/` ban — TMP's imported assets already sit in one.
 - **Inspector edits broadcast in play mode.** `GenericVariable<T>.OnValidate` defers `OnValueChanged.Invoke` via `EditorApplication.delayCall`, because Unity forbids hierarchy mutations inside `OnValidate`. Without it, editing `runtimeValue` directly bypasses the `Value` setter and silently fails to notify subscribers.
