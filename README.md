@@ -76,15 +76,16 @@ entry with no name renders without a speaker label, an unknown speaker sits on t
 the payload lists twice keeps its first record and never fetches the second. That is what makes the
 degrading behaviour testable in EditMode with no scene and no network.
 
-**Emoji are real Unicode characters, rendered through a TMP sprite asset.** The model emits the
-codepoint and no TMP markup, so the substitution is a plain string comparison in a test. Getting
-those codepoints on screen in colour took the longer road: Noto Color Emoji stores every glyph as a
-PNG, and TextMeshPro's font-asset pipeline loads glyphs with FreeType's no-bitmap flag, so it reads
-that font as empty and bakes a blank atlas without a word in the console. The supported route is a
-sprite asset, so `tools/generate_emoji_sheet.py` lifts the bitmaps straight out of the font and lays
-them out as a sheet. It is committed next to the sheet it produces, the same as the card generator.
-Noto Color Emoji is under the SIL Open Font License, and the licence travels with the subset in
-`Assets/Art/Fonts/`.
+**Emoji are real Unicode characters, and one the project has no glyph for still renders.** The model
+emits the codepoint and no TMP markup, so the substitution is a plain string comparison in a test. The
+emoji this payload names are drawn in colour from a committed sprite sheet, because Noto Color Emoji
+stores its glyphs as PNGs that TextMeshPro's font pipeline reads as empty —
+`tools/generate_emoji_sheet.py` lifts the bitmaps out of the font instead. Anything the sheet does not
+cover falls through to a monochrome Noto Emoji that rasterizes on demand, so a mock endpoint that
+changes its token set degrades to line art rather than to empty boxes. The cost is a mixed look on a
+line that needs both, and a font that ships whole; `Assets/Scripts/MagicWords/CLAUDE.md` carries the
+resolution order that lets the two coexist. Both Noto fonts are under the SIL Open Font License, and
+each licence travels with its font in `Assets/Art/Fonts/`.
 
 **A missing avatar becomes the speaker's initials in a circle**, not a placeholder image and not an
 empty gap. The initials render first and the portrait replaces them when it arrives, so a row never

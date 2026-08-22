@@ -15,7 +15,7 @@ public sealed class DialogueRowView : MonoBehaviour
     {
         speakerLabel.SetText(line.Speaker);
         speakerLabel.gameObject.SetActive(!string.IsNullOrEmpty(line.Speaker));
-        bodyLabel.SetText(line.Text);
+        bodyLabel.SetText(EmojiSpriteMarkup.Apply(line.Text));
 
         initialsLabel.SetText(line.SpeakerInitials);
         ShowInitials();

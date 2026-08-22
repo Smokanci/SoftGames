@@ -5,7 +5,8 @@
 > back to initials for the one speaker the avatar list never names. Every banner state — loading,
 > loaded, empty, unreadable, failed — was driven on screen, and the dead-URL fallback was driven from
 > a local payload carrying a refused host, a 4xx, and a 200 that is not an image.
-> `EmojiVocabularyTests.cs` and `DialogueScriptTests.cs` cover the model headlessly, and
+> `EmojiVocabularyTests.cs`, `DialogueScriptTests.cs` and `EmojiSpriteMarkupTests.cs` cover the model
+> and the sprite rewrite headlessly, and
 > `Assets/Tests/PlayMode/MagicWordsExitTests.cs` covers leaving the task both while the fetch is in
 > flight and partway through the reveal.
 > Tuned values live in the scene, not here: the endpoint, its timeout and the banner wording sit on
@@ -63,6 +64,7 @@ endpoint and adds the cases it does not carry.
 | Avatar `position` missing or unrecognised | Left. `Left` is the default, `"right"` is the opt-in. |
 | Avatar URL 404s, refuses, or returns non-image | Initials in a circle. `AvatarLibrary` never tells the row *which* failure it was. |
 | `{token}` not in the emoji table | Left in the text with its braces, so the gap is visible. |
+| An emoji character the sheet has no sprite for | Monochrome line art, for every emoji the fallback font carries. Newer than the font is still a box. |
 | Body is not JSON at all | Its own banner message, carrying the parse error. |
 | Body is valid JSON with no lines | A different banner message, so the two are not confusable. |
 | Request fails or times out | Banner carries `UnityWebRequest.error`. |
@@ -77,17 +79,43 @@ in the payload sit on records nothing reaches — one belongs to a name that nev
 the dropped duplicate. The initials circle on screen comes from the speaker with no avatar record at
 all. The dead-URL path is real and covered, but it is not visible from the build.
 
-## Emoji: a sprite asset, not a font asset
+## Emoji: colour where we have it, line art everywhere else
 
 The model emits **real Unicode characters** — `EmojiVocabulary.Substitute` swaps `{token}` for the
 codepoint, and no TMP markup ever enters the model. That keeps the substitution testable with a plain
 string compare and keeps the view the only thing that knows TMP exists.
 
-TMP resolves those characters through `TMP Settings → Default Sprite Asset`, which this project points
-at `Assets/Art/Emoji/EmojiSpriteAsset.asset`. **That setting is load-bearing**: clear it and the emoji
-render as missing-glyph boxes while everything else still works.
+Two things then resolve those codepoints, and which one wins is decided in the view:
 
-The route to that asset was not the obvious one:
+- **`Assets/Art/Emoji/EmojiSpriteAsset.asset`**, wired into `TMP Settings → Default Sprite Asset`,
+  holds the colour glyphs. `EmojiSpriteMarkup.Apply` rewrites any codepoint it has a sprite for into
+  `<sprite=N>`, and `DialogueRowView.Bind` calls that on its way to the label.
+- **`Assets/Art/Fonts/NotoEmoji SDF.asset`**, a *dynamic* font asset in `TMP Settings → Fallback Font
+  Assets`, catches everything else. It rasterizes any codepoint its source font carries the first time
+  a line asks for it, so an emoji nobody planned for still draws — in monochrome line art.
+
+**The dynamic asset is committed with its atlas cleared**, and rebuilds it at runtime the first time
+a line asks for a glyph — which is also the state every build ships, because `Clear Dynamic Data On
+Build` is on. A committed copy of that asset measured in megabytes rather than kilobytes means
+somebody saved an expanded atlas back into it; clear it again rather than leaving it, or a texture
+that the build discards anyway rides along in git forever.
+
+**The markup is not decoration, it is the only lever.** TMP walks the whole font chain before it ever
+looks at a sprite asset, so once a monochrome emoji font sits in the fallback list it shadows every
+colour sprite sharing a codepoint. Explicit `<sprite>` outranks both. Verified in play mode: without
+the rewrite the scene reported zero sprite elements and every emoji came from the font.
+
+`EmojiSpriteMarkup` reads the same `TMP_Settings.defaultSpriteAsset` the markup resolves against, so
+the sheet is the single source of truth for what is in colour — there is no second list to keep in
+step, and adding a sprite is enough to promote that emoji.
+
+Two traps this arrangement leaves standing. TMP resolves a sprite by *one* codepoint, so a skin tone
+or a ZWJ family draws as its separate parts rather than one glyph; joining them means splitting on
+grapheme clusters and emitting `<sprite>` per cluster. And `TMP_FontAsset.TryAddCharacters` refuses
+astral codepoints on the dynamic asset even though `FontEngine.TryGetGlyphWithUnicodeValue` resolves
+them and the text path renders them — so do not trust that API to pre-warm the atlas.
+
+The route to the colour sheet was not the obvious one:
 
 - The stock EmojiOne sprite asset TMP ships holds a small fixed set of smileys, none of which the
   payload asks for.
@@ -102,9 +130,12 @@ The route to that asset was not the obvious one:
   writes `Assets/Art/Emoji/emoji_sheet.png`, and records the rects in `emoji_sheet.json`. The sheet is
   committed, so a clone needs neither Python nor fonttools.
 
-To add an emoji: add it to the subset font's codepoint list, add it to `EMOJI` in the generator, re-run
-the generator, then extend the sprite asset's character and glyph tables to match `emoji_sheet.json`.
-Add the `{token}` for it to `Assets/Data/EmojiTable.asset`.
+To add an emoji **in colour**: add it to the subset font's codepoint list, add it to `EMOJI` in the
+generator, re-run the generator, then extend the sprite asset's character and glyph tables to match
+`emoji_sheet.json`. Add the `{token}` for it to `Assets/Data/EmojiTable.asset`.
+
+Skipping those steps no longer costs a missing-glyph box — the fallback font draws the emoji in line
+art instead. Only the colour is lost, and it is lost visibly.
 
 `EmojiTable` is a `ScriptableObject` rather than a `Dictionary` in code because the endpoint names an
 *emotion* and leaves the choice of glyph to the client, so which face means `intrigued` is a design
