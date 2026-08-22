@@ -1,13 +1,16 @@
 # Magic Words
 
 > **Status:** built and verified in play mode. `Assets/Scenes/MagicWords.unity` fetches the endpoint,
-> renders the conversation with colour emoji and circular avatars, and falls back to initials for the
-> one speaker the avatar list never names. Every banner state — loading, loaded, empty, unreadable,
-> failed — was driven on screen, and the dead-URL fallback was driven from a local payload carrying a
-> refused host, a 4xx, and a 200 that is not an image. `EmojiVocabularyTests.cs` and `DialogueScriptTests.cs` cover the model headlessly,
-> and `Assets/Tests/PlayMode/MagicWordsExitTests.cs` covers leaving the task while the fetch is in flight.
+> then types the conversation out one line at a time with colour emoji and circular avatars, and falls
+> back to initials for the one speaker the avatar list never names. Every banner state — loading,
+> loaded, empty, unreadable, failed — was driven on screen, and the dead-URL fallback was driven from
+> a local payload carrying a refused host, a 4xx, and a 200 that is not an image.
+> `EmojiVocabularyTests.cs` and `DialogueScriptTests.cs` cover the model headlessly, and
+> `Assets/Tests/PlayMode/MagicWordsExitTests.cs` covers leaving the task both while the fetch is in
+> flight and partway through the reveal.
 > Tuned values live in the scene, not here: the endpoint, its timeout and the banner wording sit on
-> `MagicWordsRunner`, the avatar timeout on `AvatarLibrary`.
+> `MagicWordsRunner`, the reveal speed and the gap between lines on `DialogueLogView`, the avatar
+> timeout on `AvatarLibrary`.
 
 The brief: *"Create a system that combines text and Unicode emojis to render character dialogue using
 data from the endpoint below. Load the data dynamically at runtime and handle cases where avatar URLs
@@ -24,7 +27,8 @@ may not load or data is missing."*
   `.claude/rules/csharp-conventions.md` is talking about.
 - **`DialogueLine`** — immutable, already substituted, already sided, already carries its initials.
   A row view reads fields and sets them on components; it makes no decisions.
-- **`DialogueRowView` / `DialogueLogView`** — `MonoBehaviour`s that draw. No parsing, no HTTP.
+- **`DialogueRowView` / `DialogueLogView`** — `MonoBehaviour`s that draw. No parsing, no HTTP. The
+  log view owns the pace of the conversation; the row view owns the pace of its own letters.
 
 Both requests — the payload and each avatar — go through `WebRequests.SendAsync` in
 `Assets/Scripts/Common/`, which frame-polls the operation and takes the caller's
@@ -112,6 +116,11 @@ decision, not a fact about the data.
 they have lines and they all want the same image. A URL that fails is remembered as failed, so a dead
 link costs one request for the whole session rather than one per line.
 
+**Every download starts before the first line types**, not when its row appears. `Show` walks the whole
+line list for distinct URLs first, so a portrait has the entire reveal to arrive in instead of the
+frames after its own row. A row created later either finds its sprite already in `_spriteByUrl` or
+adds itself to the list of rows waiting on that URL — the same picture, different bookkeeping.
+
 The portrait `Image` starts disabled with the initials showing, and `SetAvatar` swaps them. The
 initials hold the space either way, so a row never resizes when an image lands late.
 
@@ -123,11 +132,37 @@ unloading the scene does not take them.
 
 **The log renders once per scene load, and that invariant is load-bearing.** `Start` is the only
 caller of `MagicWordsRunner.Load`, so `DialogueLogView.Show` runs once and no second render can
-outrun the avatar downloads still in flight. A retry control cannot be added on its own — it needs
-three things with it: a re-entry guard on the fetch, a generation counter so a late avatar cannot
-write into destroyed rows, and a way to clear `AvatarLibrary`'s failure set so a dead URL is tried
-again. Recovering from a failed load today means leaving to the menu and
-re-entering, which reloads the scene.
+outrun the avatar downloads still in flight. The staged reveal widens the window this protects:
+`Show` now runs for as long as the conversation takes to type, so a second render would collide with
+a first one that is still going. A retry control cannot be added on its own — it needs three things
+with it: a re-entry guard on the fetch, a generation counter so a late avatar cannot write into
+destroyed rows, and a way to clear `AvatarLibrary`'s failure set so a dead URL is tried again.
+Recovering from a failed load today means leaving to the menu and re-entering, which reloads the
+scene.
+
+## The reveal
+
+`Show` is a loop: spawn a row, type it, pause, spawn the next. It is an `Awaitable` the runner awaits,
+so a cancellation inside it lands in the runner's `OperationCanceledException` catch and any other
+failure lands in the one below it, which raises the failed banner. Each of the three async paths here
+takes its **own** component's `destroyCancellationToken` — the runner's for the payload,
+`AvatarLibrary`'s for the downloads, the log view's for the reveal. They stop together because the
+scene unload destroys all three, not because they share a token.
+
+**The letters arrive by `maxVisibleCharacters`, not by growing the string.** `Bind` sets the whole line
+before `Reveal` hides it, so TMP lays the bubble out against the finished text on the first frame. The
+row never reflows mid-line, the scroll position never chases a growing bubble, and an emoji sprite
+counts as one character and so arrives whole. Growing the string would give all three of those away.
+`Reveal` hides the text rather than `Bind` doing it, so a row nobody reveals still reads.
+
+The character count is **accumulated against `Time.deltaTime`**, not stepped one per frame. A speed
+above the refresh rate then still reads as that speed instead of stalling at the frame rate — which
+matters on WebGL, where the frame rate is the browser's to decide.
+
+`ScrollToNewest` rebuilds the layout before it moves the scroll, because the new row was built this
+frame and the content size does not know about it yet. It only moves the scroll once the log outgrows
+the viewport: below that there is nothing hidden, and `verticalNormalizedPosition` would push the
+content off its anchor rather than do nothing.
 
 ## Layout
 

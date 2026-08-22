@@ -55,7 +55,7 @@ public sealed class MagicWordsRunner : MonoBehaviour
             }
 
             taskMessageRequested.Raise(string.Empty);
-            log.Show(script.Lines);
+            await log.Show(script.Lines);
         }
         catch (OperationCanceledException)
         {

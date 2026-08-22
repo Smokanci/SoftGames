@@ -7,8 +7,9 @@ using UnityEngine.UI;
 
 public sealed class MagicWordsExitTests
 {
-    private const float LoadTimeoutSeconds = 10f;
-    private const float LeakWatchSeconds   = 3f;
+    private const float LoadTimeoutSeconds    = 10f;
+    private const float PayloadTimeoutSeconds = 20f;
+    private const float LeakWatchSeconds      = 3f;
 
     // Leaving mid-fetch cancels the payload request and every avatar download through
     // destroyCancellationToken. A missed cancellation produces no wrong value — it resumes a
@@ -44,6 +45,45 @@ public sealed class MagicWordsExitTests
 
         Assert.IsFalse(SceneManager.GetSceneByName("MagicWords").isLoaded, "The task scene never unloaded.");
         Assert.IsTrue(SceneManager.GetSceneByName("Bootstrap").isLoaded, "The bootstrap scene went away with the task scene.");
+    }
+
+    // The conversation types itself in one long-running Awaitable loop, so a scene unloaded
+    // partway through leaves a reveal in flight as well as a download. The loop takes the log
+    // view's destroyCancellationToken, and this is what proves the token reaches it.
+    [UnityTest]
+    public IEnumerator LeavingMagicWordsMidRevealCancelsItQuietly()
+    {
+        yield return SceneManager.LoadSceneAsync("Bootstrap", LoadSceneMode.Single);
+        yield return WaitForActiveScene("Menu");
+
+        Click("MagicWordsButton");
+        yield return WaitForActiveScene("MagicWords");
+
+        // The reveal cannot start until the remote payload lands, so this waits on network time.
+        var deadline = Time.realtimeSinceStartup + PayloadTimeoutSeconds;
+        while (Object.FindFirstObjectByType<DialogueRowView>() == null && Time.realtimeSinceStartup < deadline)
+        {
+            yield return null;
+        }
+
+        // The endpoint is a mock on a host this suite does not own. A run that never got a
+        // payload proves nothing about cancellation, and failing here would blame the code for
+        // the network.
+        if (Object.FindFirstObjectByType<DialogueRowView>() == null)
+        {
+            Assert.Ignore("The endpoint did not answer, so no reveal ever started.");
+        }
+
+        Click("BackButton");
+        yield return WaitForActiveScene("Menu");
+
+        var watchUntil = Time.realtimeSinceStartup + LeakWatchSeconds;
+        while (Time.realtimeSinceStartup < watchUntil)
+        {
+            yield return null;
+        }
+
+        Assert.IsFalse(SceneManager.GetSceneByName("MagicWords").isLoaded, "The task scene never unloaded.");
     }
 
     // SceneLoader sets the active scene as the last step of a swap, so this waits for the whole
