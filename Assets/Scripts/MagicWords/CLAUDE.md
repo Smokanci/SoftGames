@@ -10,8 +10,8 @@
 > `Assets/Tests/PlayMode/MagicWordsExitTests.cs` covers leaving the task both while the fetch is in
 > flight and partway through the reveal.
 > Tuned values live in the scene, not here: the endpoint, its timeout and the banner wording sit on
-> `MagicWordsRunner`, the reveal speed and the gap between lines on `DialogueLogView`, the avatar
-> timeout on `AvatarLibrary`.
+> `MagicWordsRunner`, the reveal speed, the gap between lines and the scroll smoothing on
+> `DialogueLogView`, the avatar timeout on `AvatarLibrary`.
 
 The brief: *"Create a system that combines text and Unicode emojis to render character dialogue using
 data from the endpoint below. Load the data dynamically at runtime and handle cases where avatar URLs
@@ -190,10 +190,26 @@ The character count is **accumulated against `Time.deltaTime`**, not stepped one
 above the refresh rate then still reads as that speed instead of stalling at the frame rate — which
 matters on WebGL, where the frame rate is the browser's to decide.
 
-`ScrollToNewest` rebuilds the layout before it moves the scroll, because the new row was built this
-frame and the content size does not know about it yet. It only moves the scroll once the log outgrows
-the viewport: below that there is nothing hidden, and `verticalNormalizedPosition` would push the
-content off its anchor rather than do nothing.
+`ScrollToNewest` rebuilds the layout before it hands off, because the new row was built this frame
+and the content size does not know about it yet. It starts a slide only once the log outgrows the
+viewport: below that there is nothing hidden, and the setter would push the content off its anchor
+rather than do nothing.
+
+**The log slides to the bottom, it does not snap.** `SlideToNewest` eases the distance to the bottom
+down to zero over the frames that follow, so the older rows move up instead of jumping. It smooths
+that distance **in pixels** and converts back to `verticalNormalizedPosition` each frame: the
+normalized value means a different distance every time the content grows, so smoothing it directly
+would speed the slide up as the log got longer. Two invariants hold it together — the loop re-reads
+the distance to the bottom **every frame**, so a row landing mid-slide extends the run instead of
+restarting it, and only one slide runs at a time, which is what the stored `Coroutine` handle
+guards. The row lays itself out at full size before it types (above), so nothing but a new row ever
+moves the bottom.
+
+It is a **coroutine**, and the only one in this task. Everything else here is an `Awaitable`, because
+everything else waits on a download or is awaited by the runner. This waits on the next frame and
+nobody awaits it, so a coroutine costs it nothing and saves it two things: `StartCoroutine` hands
+back the handle that makes "one at a time" a stored reference rather than a bool, and the scene
+unload stops it outright, with no `OperationCanceledException` to catch on a path nobody awaits.
 
 ## Layout
 
