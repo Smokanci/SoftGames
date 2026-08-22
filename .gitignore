@@ -118,3 +118,8 @@ InitTestScene*.unity*
 # Kept out of Assets/ on purpose: Unity imports anything under Assets/ as a texture
 # asset with a .meta, and gate evidence is not project content.
 /[Ss]creenshots/
+
+# Unity MCP's screenshot tool defaults to Assets/Screenshots regardless of the rule
+# above, and Unity then imports each capture as a texture asset with a .meta.
+Assets/Screenshots/
+Assets/Screenshots.meta
