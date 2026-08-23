@@ -110,9 +110,9 @@ Back button, and a centred second button would sit directly under the centred fi
 ## SOAP, once
 
 `Assets/SOAP/Events/_FlameColorAdvanceRequested.asset` (`GameEventVoid`). The button is under the
-chrome canvas and the flame is in the world, so neither can hold a serialized reference to the other
-— the same crossing `_AceRestartRequested` already solves. `VoidEventButton` raises it and the
-`GameEventListenerVoid` on the flame root calls `FlameColorCycle.Advance`.
+chrome canvas and the flame is in the world, so neither can hold a serialized reference to the
+other. `VoidEventButton` raises it and the `GameEventListenerVoid` on the flame root calls
+`FlameColorCycle.Advance`.
 
 Everything else here is a direct reference within one hierarchy.
 

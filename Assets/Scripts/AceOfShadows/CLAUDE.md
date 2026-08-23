@@ -99,17 +99,13 @@ regardless — confirmed by flattening all 288 renderers to one sprite, one colo
 order and watching the number not move. `setPassCalls` is the figure that responds, and it stays in
 single digits for the whole frame. Do not treat a high batch count here as evidence of a problem.
 
-## SOAP, twice
+## SOAP, once
 
-Both crossings are hierarchy boundaries that `.claude/rules/code-conventions.md` forbids crossing
-with a serialized reference. Everything else in this task — model to view, view to counters — is a
-direct reference.
-
-- `Assets/SOAP/Events/_AceRestartRequested.asset` (`GameEventVoid`). The restart button is under a
-  canvas; the runner is not. `VoidEventButton` raises it, the runner listens.
-- `Assets/SOAP/Events/_TaskMessageRequested.asset` (`GameEventString`). The banner is inside
-  `TaskChrome.prefab`; the runner is not. **An empty string hides the banner**, so one channel
-  carries both directions and the restart does not need a second event to take the message down.
+`Assets/SOAP/Events/_TaskMessageRequested.asset` (`GameEventString`). The banner is inside
+`TaskChrome.prefab`; the runner is not, and `.claude/rules/code-conventions.md` forbids crossing that
+hierarchy boundary with a serialized reference. **An empty string hides the banner**, so one channel
+carries both directions. Everything else in this task — model to view, view to counters — is a direct
+reference.
 
 The completion wording is serialized on the runner and formatted with the deck size, so the message
 cannot drift from the card count and the label stays dumb about where its text comes from.
@@ -119,14 +115,11 @@ same error state. It lives on a GameObject that stays active and toggles a *chil
 `GameEventListenerString` beside it subscribes in `OnEnable`, so a banner that switched itself off
 would never subscribe again and would stay silent for the whole session.
 
-## The restart button
+## Watching a whole run
 
-A full run is 144 seconds and a reviewer needs to see the end message more than once. The button
-raises `_AceRestartRequested`, and the `GameEventListenerVoid` on `CardTable` calls
-`AceOfShadowsRunner.Restart` — the same method `Start` uses for the first run. It primes
-`_sinceLastMove` to the full interval so the first card leaves on the first frame instead of after a
-dead second.
+`Start` primes `_sinceLastMove` to the full interval, so the first card leaves on the first frame
+instead of after a dead second.
 
-To watch a whole run quickly, set `moveInterval` and `moveDuration` down in the inspector before
-entering play mode. Keep the duration below the interval or more than one card is in the air at a
-time — which works, but stops matching the brief.
+A full run is 144 seconds. To watch one quickly, set `moveInterval` and `moveDuration` down in the
+inspector before entering play mode. Keep the duration below the interval or more than one card is in
+the air at a time — which works, but stops matching the brief.

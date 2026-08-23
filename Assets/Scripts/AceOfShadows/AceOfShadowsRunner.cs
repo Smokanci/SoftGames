@@ -34,8 +34,13 @@ public sealed class AceOfShadowsRunner : MonoBehaviour
     private void Start()
     {
         _stacks = new CardStacks(cardCount);
+
         table.Build(cardCount);
-        Restart();
+        table.SeatAll();
+        table.SetCounts(_stacks.SourceCount, _stacks.TargetCount);
+
+        // Primed, so the first card leaves on the first frame instead of after a dead second.
+        _sinceLastMove = moveInterval;
     }
 
     private void Update()
@@ -55,20 +60,6 @@ public sealed class AceOfShadowsRunner : MonoBehaviour
 
         _sinceLastMove -= moveInterval;
         BeginMove();
-    }
-
-    // Called by the GameEventListenerVoid on this GameObject, and by Start for the first run.
-    public void Restart()
-    {
-        _stacks.Reset();
-        _flights.Clear();
-
-        // Primed, so the first card leaves on the first frame instead of after a dead second.
-        _sinceLastMove = moveInterval;
-
-        table.SeatAll();
-        table.SetCounts(_stacks.SourceCount, _stacks.TargetCount);
-        taskMessageRequested.Raise(string.Empty);
     }
 
     private void BeginMove()
