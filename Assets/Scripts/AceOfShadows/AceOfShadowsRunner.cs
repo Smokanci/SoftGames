@@ -9,6 +9,10 @@ public sealed class AceOfShadowsRunner : MonoBehaviour
         public int   FromIndex;
         public int   ToIndex;
         public float Elapsed;
+        public float ArcHeight;
+        public int   Turns;
+        public float LeanDegrees;
+        public float Drift;
     }
 
     [SerializeField] private CardTableView   table;
@@ -22,6 +26,25 @@ public sealed class AceOfShadowsRunner : MonoBehaviour
     [SerializeField] private float  moveDuration = 0.55f;
     [SerializeField] private float  arcHeight    = 1.4f;
     [SerializeField] private AnimationCurve ease = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+
+    // Arc, turn, lean and drift are rolled per card, so no two moves look alike without needing
+    // more than one flight path. Every term here returns to zero at t = 1, which is what keeps
+    // the card landing square on its slot with no separate settling step.
+    [Header("Flight variety")]
+    [Tooltip("Multiplier range on Arc Height. Both ends above zero.")]
+    [SerializeField] private Vector2 arcVariation = new Vector2(0.7f, 1.35f);
+    [Tooltip("Odds that a card takes a whole turn instead of only leaning. 0 = never, 1 = always.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float   spinChance   = 0.65f;
+    [Tooltip("Odds a turning card goes anticlockwise. 0.5 = no bias either way.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float   spinLeftChance = 0.5f;
+    [Tooltip("Peak tilt at the top of the arc, in degrees, either way.")]
+    [SerializeField] private float   leanDegrees  = 14f;
+    [Tooltip("Sideways bulge at the top of the arc, in world units, either way.")]
+    [SerializeField] private float   drift        = 0.35f;
+    [Tooltip("Extra size at the top of the arc, as a fraction. The camera is orthographic, so this is the only depth cue.")]
+    [SerializeField] private float   scaleBump    = 0.18f;
 
     // Formatted with the card count, so the wording cannot drift from the deck size.
     [SerializeField] private string completedMessage = "All {0} cards moved.";
@@ -71,10 +94,16 @@ public sealed class AceOfShadowsRunner : MonoBehaviour
 
         _flights.Add(new Flight
         {
-            CardId    = cardId,
-            FromIndex = _stacks.SourceCount,
-            ToIndex   = _stacks.TargetCount,
-            Elapsed   = 0f,
+            CardId      = cardId,
+            FromIndex   = _stacks.SourceCount,
+            ToIndex     = _stacks.TargetCount,
+            Elapsed     = 0f,
+            ArcHeight   = arcHeight * Random.Range(arcVariation.x, arcVariation.y),
+            // A whole number of turns, so the same eased t that finishes the travel also
+            // finishes the spin flat.
+            Turns       = Random.value < spinChance ? (Random.value < spinLeftChance ? 1 : -1) : 0,
+            LeanDegrees = Random.Range(-leanDegrees, leanDegrees),
+            Drift       = Random.Range(-drift, drift),
         });
     }
 
@@ -98,10 +127,15 @@ public sealed class AceOfShadowsRunner : MonoBehaviour
             var to   = table.RestingPosition(true, flight.ToIndex);
 
             var t        = ease.Evaluate(flight.Elapsed / moveDuration);
+            var arc      = Mathf.Sin(t * Mathf.PI);
             var position = Vector3.Lerp(from, to, t);
-            position.y += arcHeight * Mathf.Sin(t * Mathf.PI);
+            position.y += flight.ArcHeight * arc;
+            position.x += flight.Drift * arc;
 
-            table.SetFlightPosition(flight.CardId, position);
+            var roll  = flight.Turns * 360f * t + flight.LeanDegrees * arc;
+            var scale = 1f + scaleBump * arc;
+
+            table.SetFlightPose(flight.CardId, position, roll, scale);
             _flights[i] = flight;
         }
     }

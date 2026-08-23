@@ -34,7 +34,29 @@ two counters during a run — they sum to one less than the deck while a card is
 - `CardStacks` — the counts and the transitions. No Unity types, no timing.
 - `CardTableView` — builds the deck, knows where a card at stack index N belongs, and draws the two
   counters. **No timing, no animation.**
-- `AceOfShadowsRunner` — the clock, the flight lerp, and the completion message. Holds the model.
+- `AceOfShadowsRunner` — the clock, the flight pose, and the completion message. Holds the model.
+
+## The flight, and why it lands flat
+
+One flight path, with its values rolled per card — not a bank of animations chosen at random. At
+lift-off `AceOfShadowsRunner.BeginMove` draws an arc-height multiplier, a turn count, a lean and a
+sideways drift, and stores them on the `Flight` struct. The ranges are serialized under the *Flight
+variety* header on the runner.
+
+**Every varied term has to reach zero at `t == 1`.** Arc, drift, lean and the scale bump are all
+`sin(t * PI)`, which is zero at both ends; the spin is a *whole* number of turns times `t`, so it
+finishes on a multiple of 360. That is what lets the card land square on its slot with no separate
+settling step. Add a term that does not have this property and cards start landing crooked.
+
+The same eased `t` drives travel and spin, so the spin decelerates as the card arrives rather than
+stopping dead.
+
+The scale bump is the only depth cue available. The camera is orthographic, so the arc alone reads
+as a flat detour rather than a card coming toward the viewer.
+
+`CardTableView.Seat` resets rotation and scale, not just position — a card arrives mid-pose, and a
+seat that wrote position alone would leave it tilted and oversized in the stack for the rest of the
+run.
 
 The runner keeps flights in a list rather than one field. It costs about five lines and it survives
 someone raising `moveDuration` past `moveInterval` in the inspector; otherwise that invariant would

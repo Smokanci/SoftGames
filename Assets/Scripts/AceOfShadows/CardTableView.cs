@@ -99,7 +99,13 @@ public sealed class CardTableView : MonoBehaviour
         _inFlight[cardId]   = false;
         _stackIndex[cardId] = indexInStack;
 
-        _cards[cardId].position = RestingPosition(onTarget, indexInStack);
+        // A card arrives mid-spin and mid-bump, so a seat that only wrote position would leave
+        // it crooked and oversized in the stack for the rest of the run.
+        var card = _cards[cardId];
+        card.position      = RestingPosition(onTarget, indexInStack);
+        card.localRotation = Quaternion.identity;
+        card.localScale    = Vector3.one;
+
         SetSortingBase(cardId, indexInStack * OrdersPerCard);
     }
 
@@ -109,9 +115,12 @@ public sealed class CardTableView : MonoBehaviour
         SetSortingBase(cardId, FlightOrder);
     }
 
-    public void SetFlightPosition(int cardId, Vector3 position)
+    public void SetFlightPose(int cardId, Vector3 position, float rollDegrees, float scale)
     {
-        _cards[cardId].position = position;
+        var card = _cards[cardId];
+        card.position      = position;
+        card.localRotation = Quaternion.Euler(0f, 0f, rollDegrees);
+        card.localScale    = new Vector3(scale, scale, 1f);
     }
 
     public void SetCounts(int sourceCount, int targetCount)
