@@ -32,19 +32,47 @@ order than a task canvas so the readout stays on top; the value is on the `Canva
 - **`Assets/SOAP/Variables/_IsLoadingScene.asset`** (`BoolVariable`) is set for the duration of a
   swap. A request that arrives while it is set is **dropped, not queued** — that is deliberate, since
   the alternative is unloading a scene that is still loading. A double-click on a menu button
-  therefore navigates once. Nothing outside `SceneLoader` reads it yet — it is a SOAP asset rather
-  than a private field so a loading overlay or a disabled Back button can subscribe later without a
-  cross-scene reference. `SceneLoader.SwapTo` clears the flag in a `finally`: if it ever stopped
-  doing that, one throw would latch the flag and silently kill every later request.
+  therefore navigates once. It is a SOAP asset rather than a private field so anything outside the
+  loader can read it without a cross-scene reference; `EmberButtonGroup` does, to dim every button
+  that did not start the swap. `SceneLoader.SwapTo` clears the flag in a `finally`: if it ever
+  stopped doing that, one throw would latch the flag and silently kill every later request.
 
 Requesting the scene that is already loaded still unloads and reloads it. Nothing guards against it
-because nothing asks for it — the menu and the Back button always name a different scene.
+because nothing asks for it — the menu and the pause overlay's Exit always name a different scene.
 
 `BootstrapSmokeTests` in `Assets/Tests/PlayMode/` guards the *additive* half of that contract: it
 loads `Bootstrap` on its own and asserts both scenes end up loaded. A regression that made the first
 load `Single` instead of `Additive` would still show a working menu in the editor and would only fail
-later, when the first Back button found no bootstrap services to return to — so the assertion that
-matters is the one on `Bootstrap`, not the one on `Menu`.
+later, when the first Exit found no bootstrap services to return to — so the assertion that matters
+is the one on `Bootstrap`, not the one on `Menu`.
+
+## The pause overlay
+
+`PauseMenu` (in `Assets/Scripts/Common/`) lives on `Assets/Prefabs/TaskChrome.prefab`, **not in this
+scene**, and that placement is the whole design. The prefab is in all three task scenes and in none
+of the menu, so "the menu cannot be paused" needs no flag, no poller and no extra SOAP channel to
+say so.
+
+Pausing is `Time.timeScale = 0`. Everything the three tasks animate runs on scaled time, so one
+assignment freezes all of them; the Ember buttons and the FPS readout run on
+`Time.unscaledDeltaTime` and keep answering. Exit raises `_LoadSceneRequested` through the ordinary
+`SceneLoadRequest` component, which means **the scene unloads with time still stopped** — a zero left
+behind would follow the player into the menu and read as a hang, so `PauseMenu.OnDisable` restores
+the scale. Unloading the task scene is what disables it, so that runs on every exit path.
+
+The component sits on a GameObject that stays active and toggles a *child*, for the same reason
+`TaskMessageBanner` does: a component that switched itself off would stop reading the keyboard, and
+the overlay could then never be dismissed. Escape toggles it, through
+`UnityEngine.InputSystem.Keyboard` — this project has no legacy input, so `Input.GetKeyDown` does not
+compile.
+
+Two separate things keep the task from being driven while the overlay is up, and both are needed.
+The backdrop is a full-screen raycast target *later in the hierarchy than the chrome*, so it swallows
+every click meant for the task underneath. That covers the pointer and nothing else: `EventSystem`
+navigation ignores raycasts, and the Ember button prefab navigates `Automatic`, so arrow keys would
+otherwise walk the focus straight out of the overlay and onto Phoenix Flame's colour button. So
+`PauseMenu` also clears `interactable` on the chrome's `CanvasGroup` — that is the half that stops
+the keyboard.
 
 ## Ordering that a task scene can rely on
 

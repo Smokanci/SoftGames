@@ -1,8 +1,9 @@
 # Ember buttons
 
 > **Status:** built and in use. Every button in the app is an instance of
-> `Assets/Prefabs/EmberButton.prefab` — the three menu entries, the Back button on
-> `Assets/Prefabs/TaskChrome.prefab`, and Phoenix Flame's colour button.
+> `Assets/Prefabs/EmberButton.prefab` — the three menu entries, the pause button and the pause
+> overlay's Resume and Exit on `Assets/Prefabs/TaskChrome.prefab`, and Phoenix Flame's colour
+> button.
 > `Assets/Tests/EditMode/EmberHeatTests.cs` drives the press model with no scene. Every tuned
 > level, duration and proportion lives on `Assets/Data/EmberStyle.asset`; the only number an
 > instance owns is its hue. None of them are quoted here.
@@ -41,7 +42,7 @@ Two fields carry meaning a number cannot:
   `settleFactor`. Raise it and every duration silently starts meaning a tighter approach than it
   says.
 - **`bloomSpreadX` / `bloomSpreadY` are multiples of the face's own width and height**, not pixels.
-  That is what lets one asset serve a wide menu button and a narrow Back button — a single square
+  That is what lets one asset serve a wide menu button and a square pause button — a single fixed
   spread gives the wide one a circle that overshoots its ends.
 
 `EmberHeat` takes the asset in its constructor and holds no `MonoBehaviour` dependency, so an
@@ -79,8 +80,10 @@ instead: it reads `PointerOver` and `Selected`, then pushes the answer back down
 The same direction explains `ConsumePressed()`. It is a latch, not a callback — a press that starts
 and ends inside a single frame is still there to be read when the group next looks.
 
-Set `idleGlow` false on a group whose buttons are chrome rather than a choice. The Back button uses
-that: nothing about a task screen is asking to be pressed.
+Set `idleGlow` false on a group whose buttons are chrome rather than a choice. The pause button uses
+that: nothing about a task screen is asking to be pressed. The pause overlay is a separate group with
+`idleGlow` on, because Resume and Exit *are* a choice — that is why the overlay is a sibling of the
+chrome's group rather than a child of it.
 
 ## Commit, with nothing filling
 

@@ -27,10 +27,10 @@ public sealed class MagicWordsExitTests
         yield return WaitForActiveScene("MagicWords");
 
         // One frame is all Start needs to issue the request, and far less than a remote HTTPS GET
-        // needs to answer, so the back press below lands while the request is still in flight.
+        // needs to answer, so the exit below lands while the request is still in flight.
         yield return null;
 
-        Click("BackButton");
+        ExitTask();
         yield return WaitForActiveScene("Menu");
 
         // A continuation that outlived its component resumes when its request answers, which is a
@@ -74,7 +74,7 @@ public sealed class MagicWordsExitTests
             Assert.Ignore("The endpoint did not answer, so no reveal ever started.");
         }
 
-        Click("BackButton");
+        ExitTask();
         yield return WaitForActiveScene("Menu");
 
         var watchUntil = Time.realtimeSinceStartup + LeakWatchSeconds;
@@ -98,6 +98,16 @@ public sealed class MagicWordsExitTests
         }
 
         Assert.AreEqual(sceneName, SceneManager.GetActiveScene().name, "The scene swap never finished.");
+    }
+
+    // Exit lives inside the pause overlay, which starts inactive — so GameObject.Find cannot see it
+    // until the pause button has opened the panel. No frame is needed between the two: SetActive is
+    // immediate. The overlay also stops time, which is why everything this suite waits on is
+    // realtime or a bare frame yield rather than a scaled duration.
+    private static void ExitTask()
+    {
+        Click("PauseButton");
+        Click("ExitButton");
     }
 
     private static void Click(string buttonName)

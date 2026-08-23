@@ -100,12 +100,12 @@ the smoke its legibility.
 The bootstrap camera is orthographic, so the vertical extent is a fixed number of world units on
 every device and the fire needs no responsive layout of its own.
 
-The one constraint that is not obvious: **the flame base must sit above the button row at the widest
+The one constraint that is not obvious: **the flame base must sit above `ColorButton` at the widest
 aspect.** The canvas scaler is matched half-way between a portrait reference width and height, so
 the same button occupies a much taller slice of a landscape viewport than of a portrait one; a flame
-rooted low enough to look grounded in portrait licks over the Back button in landscape. `ColorButton`
-is anchored bottom-**right** for the same family of reasons — bottom-centre is taken by the shared
-Back button, and a centred second button would sit directly under the centred fire.
+rooted low enough to look grounded in portrait licks over the button in landscape. That is also why
+the button is anchored bottom-**right** rather than bottom-centre: a centred one would sit directly
+under the centred fire.
 
 ## SOAP, once
 
