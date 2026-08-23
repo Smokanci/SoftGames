@@ -191,17 +191,22 @@ Two font assets in `Assets/Art/Fonts/`, both generated from Google's Archivo fam
 `Archivo SDF` is the `m_defaultFontAsset` on `Assets/TextMesh Pro/Resources/TMP Settings.asset`, so a
 new `TMP_Text` gets it without being told.
 
-**The fallback chain is what keeps Magic Words working, and its order matters.** Both assets are
+**The fallback chain is what keeps Magic Words working.** Both assets are
 `AtlasPopulationMode.Static` and carry Latin only, but the dialogue text arrives from a remote
 endpoint and can contain anything. The global fallback list is, in order:
 
-1. `NotoEmoji SDF` — the emoji glyphs. Emoji also resolve ahead of this through
-   `EmojiSpriteAsset`, the default sprite asset; the font is the second route.
+1. `NotoEmoji SDF` — monochrome emoji outlines, drawn on demand.
 2. `LiberationSans SDF` — the last resort, and the only asset here with broad coverage.
 
 Dropping `LiberationSans SDF` off the end would turn any non-Latin character in the feed into a
 missing glyph. Reordering it above the others would spend it on characters Archivo already has, in a
 face that does not match.
+
+**The colour emoji do not travel this chain.** TMP resolves a codepoint through every font in the
+chain before it looks at a sprite asset, so `NotoEmoji SDF` would shadow each colour sprite that
+shares a codepoint. Magic Words rewrites those codepoints into explicit `<sprite>` markup instead,
+which outranks both — so the fallback font is the monochrome floor under the colour sheet, not a
+rival to it. `Assets/Scripts/MagicWords/CLAUDE.md` has the mechanism and what it costs.
 
 **Static atlases are a deliberate trade.** A dynamic atlas would cover every codepoint on demand,
 but it rasterises at runtime and grows the texture mid-session — on WebGL that is a visible hitch on
