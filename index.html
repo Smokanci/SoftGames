@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes, viewport-fit=cover">
+    <meta name="theme-color" content="#08080b">
+    <title>SoftGames Assignment</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='11' fill='%23ff7a2f'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23ffd9a0'/%3E%3C/svg%3E">
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #08080b;
+        overflow: hidden;
+        overscroll-behavior: none;
+        touch-action: none;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: #efe6dc;
+      }
+      #unity-container {
+        position: fixed;
+        inset: 0;
+      }
+      #unity-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: #08080b;
+      }
+      #unity-canvas:focus {
+        outline: none;
+      }
+      #loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 22px;
+        background: radial-gradient(60% 55% at 50% 62%, #241309 0%, #0d0a0b 55%, #08080b 100%);
+        transition: opacity 420ms ease;
+      }
+      #loader.gone {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #loader-title {
+        font-size: clamp(15px, 3.6vw, 22px);
+        font-weight: 600;
+        letter-spacing: 0.34em;
+        text-transform: uppercase;
+        color: #f4e2cf;
+      }
+      #loader-track {
+        width: min(300px, 62vw);
+        height: 3px;
+        border-radius: 3px;
+        background: #2a2118;
+        overflow: hidden;
+      }
+      #loader-fill {
+        width: 0%;
+        height: 100%;
+        border-radius: 3px;
+        background: linear-gradient(90deg, #b83c12 0%, #ff7a2f 55%, #ffd9a0 100%);
+        box-shadow: 0 0 14px rgba(255, 122, 47, 0.65);
+        transition: width 160ms linear;
+      }
+      #loader-note {
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #8b7d70;
+      }
+      #unity-warning {
+        position: fixed;
+        left: 50%;
+        top: 16px;
+        transform: translateX(-50%);
+        z-index: 10;
+        display: none;
+        max-width: min(560px, 88vw);
+      }
+      #unity-warning div {
+        margin-bottom: 8px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        line-height: 1.45;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="unity-container">
+      <canvas id="unity-canvas" tabindex="-1"></canvas>
+    </div>
+    <div id="loader">
+      <div id="loader-title">SoftGames Assignment</div>
+      <div id="loader-track"><div id="loader-fill"></div></div>
+      <div id="loader-note">Loading</div>
+    </div>
+    <div id="unity-warning"></div>
+    <script>
+      var canvas = document.querySelector("#unity-canvas");
+      var loader = document.querySelector("#loader");
+      var loaderFill = document.querySelector("#loader-fill");
+      var loaderNote = document.querySelector("#loader-note");
+
+      function unityShowBanner(msg, type) {
+        var warningBanner = document.querySelector("#unity-warning");
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') {
+          div.style.background = '#5a1a12';
+          div.style.color = '#ffd9d0';
+        } else {
+          if (type == 'warning') {
+            div.style.background = '#463314';
+            div.style.color = '#ffe7bb';
+          }
+          setTimeout(function () {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/WebGL.loader.js";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/WebGL.data.unityweb",
+        frameworkUrl: buildUrl + "/WebGL.framework.js.unityweb",
+        codeUrl: buildUrl + "/WebGL.wasm.unityweb",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "Cristian Smochina",
+        productName: "SoftGames Assignment",
+        productVersion: "1.0",
+        showBanner: unityShowBanner,
+      };
+
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          loaderFill.style.width = 100 * progress + "%";
+        }).then((unityInstance) => {
+          loader.classList.add("gone");
+          setTimeout(() => loader.remove(), 500);
+          canvas.focus();
+        }).catch((message) => {
+          loaderNote.textContent = message;
+          loaderNote.style.color = "#ff9c7a";
+          loaderNote.style.letterSpacing = "0.04em";
+          loaderNote.style.textTransform = "none";
+        });
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>
