@@ -1,9 +1,9 @@
-# Ember buttons
+# Shared UI
 
-> **Status:** built and in use. Every button in the app is an instance of
-> `Assets/Prefabs/EmberButton.prefab` — the three menu entries, the pause button and the pause
-> overlay's Resume and Exit on `Assets/Prefabs/TaskChrome.prefab`, and Phoenix Flame's colour
-> button.
+> **Status:** built and in use. Two things live here: the Ember button, and the app's type. Every
+> button in the app is an instance of `Assets/Prefabs/EmberButton.prefab` — the three menu entries,
+> the pause button and the pause overlay's Resume and Exit on `Assets/Prefabs/TaskChrome.prefab`,
+> and Phoenix Flame's colour button.
 > `Assets/Tests/EditMode/EmberHeatTests.cs` drives the press model with no scene. Every tuned
 > level, duration and proportion lives on `Assets/Data/EmberStyle.asset`; the only number an
 > instance owns is its hue. None of them are quoted here.
@@ -179,3 +179,33 @@ Two traps, both of which cost time here:
   capture lands a frame or more later, by which time the alpha is zero. Pause the editor first, then
   write the bloom's size and colour directly — with `Update` frozen, the values stay put for the
   capture.
+
+## Type
+
+Two font assets in `Assets/Art/Fonts/`, both generated from Google's Archivo family:
+
+- **`ArchivoExpanded SDF`** — display only. Scene titles and Ace of Shadows' stack counters. Its
+  width is the whole point; at body size it reads as a mistake, so do not use it for running text.
+- **`Archivo SDF`** — everything else. Button captions, dialogue, the FPS readout.
+
+`Archivo SDF` is the `m_defaultFontAsset` on `Assets/TextMesh Pro/Resources/TMP Settings.asset`, so a
+new `TMP_Text` gets it without being told.
+
+**The fallback chain is what keeps Magic Words working, and its order matters.** Both assets are
+`AtlasPopulationMode.Static` and carry Latin only, but the dialogue text arrives from a remote
+endpoint and can contain anything. The global fallback list is, in order:
+
+1. `NotoEmoji SDF` — the emoji glyphs. Emoji also resolve ahead of this through
+   `EmojiSpriteAsset`, the default sprite asset; the font is the second route.
+2. `LiberationSans SDF` — the last resort, and the only asset here with broad coverage.
+
+Dropping `LiberationSans SDF` off the end would turn any non-Latin character in the feed into a
+missing glyph. Reordering it above the others would spend it on characters Archivo already has, in a
+face that does not match.
+
+**Static atlases are a deliberate trade.** A dynamic atlas would cover every codepoint on demand,
+but it rasterises at runtime and grows the texture mid-session — on WebGL that is a visible hitch on
+first use. The character set is baked instead: ASCII, Latin-1, and the punctuation the copy actually
+uses (dashes, curly quotes, ellipsis, arrows, bullet). Adding a character to the copy that is not in
+that set falls through to the fallback chain rather than failing, which is why the chain is not
+optional.
