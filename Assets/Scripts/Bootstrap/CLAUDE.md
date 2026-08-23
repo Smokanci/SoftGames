@@ -126,6 +126,33 @@ otherwise walk the focus straight out of the overlay and onto Phoenix Flame's co
 `PauseMenu` also clears `interactable` on the chrome's `CanvasGroup` — that is the half that stops
 the keyboard.
 
+## The message banner
+
+`TaskMessageBanner` (in `Assets/Scripts/Common/`) is the other thing on `TaskChrome.prefab` that
+every task inherits. Ace of Shadows raises its completion line through it and Magic Words raises
+every failure state through it, over one `GameEventString` channel where an empty string means hide.
+
+**The panel stretches from screen edge to screen edge, and that is a constraint rather than a
+style.** It shares the glass with world-space sprites that no canvas knows about, and on the Ace of
+Shadows table there is nowhere for a centred box to sit. Both stacks are pinned to a horizontal
+distance from centre by the clamp in `CardTableView.RestingPosition`, and a full stack grows upward
+from `stackBaseY` by one card offset per card until its top passes the middle of the screen. A panel
+narrow enough to look tidy therefore ends its right edge inside the destination stack, dimming the
+top of it behind a translucent fill with a hard vertical seam alongside — and only once the deal
+finishes, which is also the only moment the banner is on screen. A band with no side edges cannot
+land on anything.
+
+**`Label` is pinned, not stretched, so the text measure does not follow the panel.** Widening the
+panel would otherwise widen the line, and the Magic Words failure messages are authored to wrap to
+two lines at the measure the label has today. Keep the two independent: the panel is free to change
+width, the label's is what the copy was written against.
+
+What the band cannot avoid is crossing the stack vertically. There is no clear horizontal strip once
+the destination stack is full — it runs from below the table to above the centre line, with the
+counters above that — so the fill passes over the top of the stack by design. The `Image` carries
+`raycastTarget` off, which is what keeps a full-width band from swallowing input meant for the task
+underneath; the Magic Words scroll view sits directly behind it.
+
 ## Ordering that a task scene can rely on
 
 `SceneLoader` unloads the outgoing scene **before** it loads the incoming one, so the two never
