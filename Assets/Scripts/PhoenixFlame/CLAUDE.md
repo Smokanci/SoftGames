@@ -60,7 +60,7 @@ colour: nothing is left to accumulate into white. If a new colour looks dead in 
 *other* two channels rather than its own.
 
 Smoke uses alpha blending instead, because additive grey adds light and smoke is supposed to take it
-away. It is authored close to black for the same reason — the backdrop is light, so smoke only reads
+away. It is authored close to black for the same reason — the ground is light here, so smoke only reads
 as smoke when it is darker than what it sits on.
 
 ## Art
@@ -82,18 +82,20 @@ The spark texture skips the noise entirely, and its emitter draws it as a plain 
 than a stretched one. Both were tried the other way round: a sprite that reads as fire at puff size
 reads as a leaf once it is stretched along its velocity, because the ragged edge stretches with it.
 
-## The backdrop
+## The ground is light here, and that is this scene's doing
 
-`Backdrop` is a neutral grey `SpriteRenderer` far below every particle in sorting order, scaled well
-past any viewport. The app's shared camera clear colour is a mid blue, and a blue flame on it is
-barely legible — which would hide a third of the thing the task is being graded on. Grey is the
-neutral all three hues read against; it also gives the dark smoke something to show up on. The
-backdrop is scene-local, so the other two tasks keep the shared background.
+This scene has no backdrop of its own. The app's shared ground lives in `Bootstrap.unity` — see
+`Assets/Scripts/Bootstrap/CLAUDE.md` — and every scene tells it what colour to be through two SOAP
+`ColorVariable`s. The `SceneGroundTint` on this scene's root is the one that asks for a **mid-value
+grey fill** where the other three ask for near-black.
 
-The cost of a light backdrop is real and worth knowing before retuning it: additive blending has
-less headroom above a bright ground, so the hot centre reaches white sooner and the fire looks
-slightly flatter than it would on black. Darkening the backdrop buys that contrast back and costs
-the smoke its legibility.
+The reason is legibility: a blue flame on a near-black ground is barely visible, which would hide a
+third of the thing the task is being graded on. Grey is the neutral all three hues read against, and
+it also gives the dark smoke something to show up on.
+
+The cost is real and worth knowing before retuning it: additive blending has less headroom above a
+bright ground, so the hot centre reaches white sooner and the fire looks slightly flatter than it
+would on black. Darkening the fill buys that contrast back and costs the smoke its legibility.
 
 ## Layout
 

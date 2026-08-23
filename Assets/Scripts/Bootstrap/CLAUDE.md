@@ -19,6 +19,47 @@ It also owns the global canvas that carries the FPS readout. That canvas sits at
 order than a task canvas so the readout stays on top; the value is on the `Canvas` component in
 `Bootstrap.unity`, not repeated here.
 
+## The ground
+
+`EmberGround` draws the app's only backdrop, and it lives here rather than one copy per task scene.
+A task scene carrying its own would pop it in a frame late on every swap, and four copies would
+drift apart the moment one of them was retuned. Three layers, bottom to top: a flat fill sprite, a
+soft radial bloom low on the screen, and a slow drift of ash particles. Every tuned number is on the
+components in `Bootstrap.unity`.
+
+**The layers are world-space sprites, not UI.** A `ParticleSystem` cannot render into a
+ScreenSpace-Overlay canvas, so the ash forces the whole ground into the world and out of
+`[GlobalCanvas]`. They sit at large negative sorting orders to stay under any task scene's sprites.
+
+**Both sprite renderers use `Assets/Art/UI/GroundUnlit.mat`.** The material Unity assigns by default
+here is `Sprite-Lit-Default`, and there are no 2D lights in any scene in this project — a lit sprite
+renders black. If the ground ever goes black, check the material before anything else.
+
+What a scene owns is two colours, not a ground. `SceneGroundTint` (in `Assets/Scripts/Common/`)
+publishes them in `OnEnable`, so the ease starts in the same frame the scene comes up:
+
+- **`Assets/SOAP/Variables/_GroundTint.asset`** (`ColorVariable`) — the hue of the bloom and the ash.
+- **`Assets/SOAP/Variables/_GroundFill.asset`** (`ColorVariable`) — the flat colour behind everything.
+
+`EmberGround` **polls** both every frame and eases toward them rather than listening for a change.
+That is what turns a scene swap into a cross-fade instead of a cut, and it uses the same
+`1 - exp(-k·dt/seconds)` ease as `EmberHeat`, so tuning a swap and tuning a button press mean the
+same thing. Both halves of that ease are serialized here, on `EmberGround`; `EmberHeat` reads its
+own from `EmberStyle.asset`, and the two are set independently.
+`EmberButtonGroup` reads `_IsLoadingScene` the same way and for the same reason.
+
+**Every scene carries a `SceneGroundTint`, the menu included.** A screen with none would silently
+inherit whichever screen ran before it. Phoenix Flame is the one that sets `_GroundFill` to a
+mid-value grey — its blue and green flame is illegible on near-black — and it is why that task no
+longer needs a backdrop of its own.
+
+`Menu.unity` has no background image. The shared ground is the menu's backdrop; anything opaque and
+full-rect on a task canvas hides it completely.
+
+Art: `tools/generate_ground_sprites.py` draws the flat fill, and the bloom reuses `ember_radial.png`
+from the Ember button set rather than owning a second blob. Both are white on transparent so the
+runtime tint decides the hue, the same arrangement as every other generated texture here.
+
 ## The scene-swap contract
 
 `SceneLoader` is the only thing that calls `SceneManager`. Everything else asks over SOAP.

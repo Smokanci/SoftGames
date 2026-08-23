@@ -33,6 +33,12 @@ types, so an EditMode test drives it with no scene and no play mode; the `MonoBe
 draws. `CardStacks` / `CardTableView` in Ace of Shadows is the worked example, and `FpsSampler` /
 `FpsCounterView` in the shell is the same shape.
 
+**One background for the whole app, tinted per screen.** The bootstrap scene draws the only
+backdrop — a flat fill, a soft ember bloom, and a slow drift of ash. A task scene never carries its
+own; it publishes two colours through SOAP and the shared ground eases toward them, so a scene swap
+cross-fades the background instead of cutting it. That is also why Phoenix Flame can ask for a light
+ground while the other three stay near-black, with no second background object anywhere.
+
 **Where to find things.** Runtime code is under `Assets/Scripts/`, one folder per subsystem, most
 with a `CLAUDE.md` next to the code explaining its contracts and its traps. Start at the root
 `CLAUDE.md` for the index. Three assemblies: `Game.Runtime` holds all task code, with
@@ -126,12 +132,11 @@ card sheet is, white on transparent, so every colour on screen comes from runtim
 blending on the three fire layers is what makes the core go white-hot without a second colour
 anywhere in the setup.
 
-**The scene brings its own grey backdrop.** The app's shared background is a mid blue, and a blue
-flame on it is barely legible — which would hide a third of what this task is graded on. Grey is the
-neutral all three hues read against, and it is what makes the smoke visible, since smoke is drawn
-dark over a light ground rather than bright over a dark one. The backdrop is a sprite inside the task
-scene, so the other
-two keep the shared look.
+**This scene asks the shared ground to go light.** Every screen publishes two colours that the app's
+one background reads (see *Architecture* above); the other three ask for near-black, and this one
+asks for a mid grey. A blue flame on near-black is barely legible — which would hide a third of what
+this task is graded on. Grey is the neutral all three hues read against, and it is what makes the
+smoke visible, since smoke is drawn dark over a light ground rather than bright over a dark one.
 
 **No EditMode test here, on purpose.** There is no plain-C# model to drive: the cycle *is* the
 controller graph. The PlayMode test presses the real button three times and asserts the animator
