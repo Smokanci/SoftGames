@@ -27,6 +27,12 @@ drift apart the moment one of them was retuned. Three layers, bottom to top: a f
 soft radial bloom low on the screen, and a slow drift of ash particles. Every tuned number is on the
 components in `Bootstrap.unity`.
 
+**The motes prewarm, and `EmberGround.OnEnable` clears and restarts them because of it.** The
+prewarmed batch spawns before that first `Apply`, so it would carry the start colour serialized on
+the system instead of the scene's tint, and those motes then live out a full lifetime in the wrong
+colour. Nothing recolours a particle after it spawns — `startColor` is read once, at spawn — so the
+only fix is to re-run the prewarm after the colour is set.
+
 **The layers are world-space sprites, not UI.** A `ParticleSystem` cannot render into a
 ScreenSpace-Overlay canvas, so the ash forces the whole ground into the world and out of
 `[GlobalCanvas]`. They sit at large negative sorting orders to stay under any task scene's sprites.

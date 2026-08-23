@@ -40,6 +40,11 @@ public sealed class EmberGround : MonoBehaviour
         _tint = tint.Value;
         _fill = fill.Value;
         Apply();
+
+        // The motes prewarm, and that first batch spawns before this Apply lands, so it would carry
+        // the start colour serialized on the system rather than the scene's tint.
+        motes.Clear();
+        motes.Play();
     }
 
     // Polled rather than listened to. The ease is what makes a scene swap cross-fade instead of cut,
