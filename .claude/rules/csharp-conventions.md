@@ -22,6 +22,45 @@ scene/prefab YAML with a dangling reference and produces "Serialized field not f
 declarations unconditional. This bites hardest on `UNITY_WEBGL` / `UNITY_EDITOR` splits, which this
 project has by definition.
 
+### Tuned values are serialized; structural constants are not
+
+A number that decides how something **looks or feels** is set by whoever is looking at the screen,
+not by whoever recompiles. Durations, rates, colours, intensities, distances, thresholds, counts of
+things a designer would add or remove — all `[SerializeField]`, with a `[Tooltip]` when the units or
+the meaning are not obvious from the name. Burying one in a `const` costs a compile and a domain
+reload per attempt, which in practice means it is tuned once and never revisited.
+
+A number that decides **what is correct** stays a `const`. A stride into an array, a sorting-order
+budget, a bit width, an epsilon, a required element count: there is one right answer, and exposing it
+invites a value that silently breaks the arithmetic around it. Making it editable is not flexibility,
+it is a foot-gun with an inspector row.
+
+The test is what a change to the number does. If it produces a different-looking but still-correct
+build, serialize it. If it produces a broken one, leave it `const` and let the name carry the reason.
+
+```csharp
+✓  [SerializeField] [Min(0.001f)] private float fadeSeconds = 0.25f;   // feel — the designer's call
+✓  private const int ChannelsPerVertex = 4;                            // the format says 4, not taste
+✗  private const float FadeSeconds = 0.25f;                            // feel, locked behind a compile
+✗  [SerializeField] private int channelsPerVertex = 4;                 // set it to 3 and nothing draws
+```
+
+Both live cases are worth reading: `EmberGround` in `Assets/Scripts/Bootstrap/` for the serialized
+side, and `CardTableView.OrdersPerCard` in `Assets/Scripts/AceOfShadows/` for the structural one.
+
+Two consequences worth stating. **Serialized beats `const` even for a value nothing has retuned yet**
+— "we only ever use 3" is a statement about today, and the whole cost of the rule is one inspector
+row. And guard the values where a bad entry breaks the arithmetic rather than merely looking wrong —
+a denominator gets `[Min(0.001f)]`, so a zero is unenterable instead of producing `NaN` or a frozen
+ease. A fraction that is merely out of taste needs no attribute; say the intended range in the
+`[Tooltip]` and trust the person tuning it. `Assets/Scripts/UI/EmberStyle.cs` is the worked example of
+both halves.
+
+Where several components share one feel, the tuned values move to a `ScriptableObject` that each
+reads — `Assets/Data/EmberStyle.asset` is the worked example. Do not copy a value out of a shared
+asset into a `const` somewhere else "to match it": the copy stops matching the moment the asset is
+retuned, and the comment claiming they agree is what makes the drift hard to find.
+
 ### Always write the access modifier
 
 C# defaults an unmarked member to `private`, so `void OnEnable()` and `private void OnEnable()`

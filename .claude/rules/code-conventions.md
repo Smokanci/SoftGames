@@ -9,6 +9,7 @@ all). A one-liner here is the ban, not the reasoning behind it.
 - **Always use braces.** Every `if`, `else`, `for`, `foreach`, `while`, `using` body gets `{ }`, single-line included.
 - **Never `public` for inspector-exposed data.** `[SerializeField] private T name;` + `public T Name => name;`. New files have no exemption.
 - **Never put `[SerializeField]` fields inside `#if` blocks.** Gate behaviour, never declarations.
+- **A tuned value is a `[SerializeField]`, never a `const`.** If someone would change it to make the game look or feel different, it belongs in the inspector. Structural constants stay `const`.
 - **Always write the access modifier.** No implicit default on any member — method, field, `const`, property. `private void OnEnable()`, not `void OnEnable()`. Unity message methods included.
 - **No singletons. No static runtime registries.** Cross-system runtime discovery goes through SOAP. Editor-only static state is the sole exception.
 - **No cross-hierarchy scene references.** A serialized *scene* ref on A may point only at A's own GO, parent, child, or sibling-descendant. Cross-hierarchy comms goes through SOAP.
