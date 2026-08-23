@@ -106,15 +106,20 @@ EmberButton   CanvasGroup + Button (transition None) + EmberButtonView
 ├─ Glow       resting heat, additive, pooled under the face
 ├─ Face       the panel that moves on press
 │  ├─ Rim     the outline that lights
-│  └─ Label   TMP
+│  ├─ Label   TMP
+│  └─ Glyph   an icon instead of a word — inactive until an instance turns it on
 └─ Bloom      the press burst, additive
 ```
 
 The prefab holds the `style` reference, so every instance inherits it. An instance sets four
-things: the label text, the `hue` on `EmberButtonView`, its placement (anchors, size, pivot or
-`LayoutElement`), and the component that does the actual work (`SceneLoadRequest`,
-`VoidEventButton`, whatever the screen needs). **Overriding anything else on an instance is the
-bug** — it is how one button ends up breathing out of step with the rest.
+things: its caption — either the label text or a sprite on `Glyph` with the label left empty — the
+`hue` on `EmberButtonView`, its placement (anchors, size, pivot or `LayoutElement`), and the
+component that does the actual work (`SceneLoadRequest`, `VoidEventButton`, whatever the screen
+needs). **Overriding anything else on an instance is the bug** — it is how one button ends up
+breathing out of step with the rest.
+
+`Glyph` is a child of `Face` rather than of the root so it dips with the press, and it carries no
+component of its own beyond the `Image`: the view never touches it, so a glyph is pure authoring.
 
 Three invariants hold the prefab together:
 
@@ -141,18 +146,23 @@ mask keywords added.
 
 ## Art
 
-`tools/generate_ui_sprites.py` (Pillow) draws `ui_panel.png`, `ui_rim.png` and `ember_radial.png`
-into `Assets/Art/UI/`, white on transparent so the runtime tint decides the hue — the same
-arrangement the card sheet and the flame puffs use. The PNGs are committed, so a clone needs neither
-Python nor Pillow.
+`tools/generate_ui_sprites.py` (Pillow) draws `ui_panel.png`, `ui_rim.png`, `ember_radial.png` and
+`ui_pause.png` into `Assets/Art/UI/`, white on transparent so the runtime tint decides the hue — the
+same arrangement the card sheet and the flame puffs use. The PNGs are committed, so a clone needs
+neither Python nor Pillow.
 
-Two things about it are load-bearing:
+Three things about it are load-bearing:
 
 - The two rectangles are nine-sliced, so their size in a scene is independent of the size drawn here
   and only the corner radius is baked in. **`BORDER` must stay larger than `RADIUS`** or the slice
   cuts through the curve and the corners smear. The script refuses to run otherwise.
 - The radial blob uses a squared falloff, not a linear one. A linear ramp reads as a flat disc with a
   hard edge once it is tinted and stretched across a button.
+- **The pause glyph is not nine-sliced**, so unlike the two rectangles its bar proportions are the
+  ones that reach the screen. They are authored as fractions of the square, which keeps the shape
+  intact if the source is ever redrawn larger. It also has to import as **Sprite / Single**, not
+  Multiple — the project's texture default is Multiple, left over from the card sheet, and it
+  auto-slices the glyph into two bars.
 
 ## Verifying it in the Editor
 
