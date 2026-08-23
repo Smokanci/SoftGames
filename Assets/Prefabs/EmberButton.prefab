@@ -377,7 +377,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4294963954
   m_fontColor: {r: 0.9490196, g: 0.9490196, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -390,7 +390,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -629,4 +629,6 @@ MonoBehaviour:
   glow: {fileID: 667091017045917143}
   rim: {fileID: 3307485331730488390}
   bloom: {fileID: 896628989043481233}
+  label: {fileID: 1639506879896224556}
+  glyph: {fileID: 7167498013679442758}
   hue: {r: 1, g: 0.478, b: 0.239, a: 1}

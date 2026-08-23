@@ -16,6 +16,8 @@ public sealed class EmberButtonView : MonoBehaviour,
     [SerializeField] private Image         glow;
     [SerializeField] private Image         rim;
     [SerializeField] private RectTransform bloom;
+    [SerializeField] private Graphic       label;
+    [SerializeField] private Graphic       glyph;
 
     // The one thing a button owns rather than shares: its task's colour.
     [SerializeField] private Color hue = new Color(1f, 0.478f, 0.239f, 1f);
@@ -24,6 +26,10 @@ public sealed class EmberButtonView : MonoBehaviour,
     private CanvasGroup _canvasGroup;
     private Image       _bloomImage;
     private Vector2     _faceHome;
+    private Vector3     _faceScaleHome;
+    private Vector3     _glowHome;
+    private Color       _labelHome;
+    private Color       _glyphHome;
     private float       _bloomAge;
     private float       _submitHold;
     private bool        _pointerOver;
@@ -64,11 +70,15 @@ public sealed class EmberButtonView : MonoBehaviour,
 
     private void Awake()
     {
-        _heat        = new EmberHeat(style);
-        _canvasGroup = GetComponent<CanvasGroup>();
-        _bloomImage  = bloom.GetComponent<Image>();
-        _faceHome    = face.anchoredPosition;
-        _bloomAge    = style.BloomSeconds;
+        _heat          = new EmberHeat(style);
+        _canvasGroup   = GetComponent<CanvasGroup>();
+        _bloomImage    = bloom.GetComponent<Image>();
+        _faceHome      = face.anchoredPosition;
+        _faceScaleHome = face.localScale;
+        _glowHome      = glow.rectTransform.localScale;
+        _labelHome     = label.color;
+        _glyphHome     = glyph.color;
+        _bloomAge      = style.BloomSeconds;
     }
 
     private void Update()
@@ -89,13 +99,18 @@ public sealed class EmberButtonView : MonoBehaviour,
         _heat.Tick(deltaTime);
 
         glow.color = new Color(hue.r, hue.g, hue.b, _heat.Glow * style.GlowIntensity);
+        glow.rectTransform.localScale = _glowHome * _heat.Spread;
 
-        var hot = Mathf.InverseLerp(style.HoverRim, style.PressRim, _heat.Rim) * style.WhiteMix;
-        var rimColor = Color.Lerp(hue, Color.white, hot);
+        var rimColor = Color.Lerp(hue, Color.white, _heat.White);
         rimColor.a = _heat.Rim;
         rim.color = rimColor;
 
+        var caption = Mathf.Lerp(style.CaptionRestAlpha, 1f, _heat.Caption);
+        label.color = new Color(_labelHome.r, _labelHome.g, _labelHome.b, _labelHome.a * caption);
+        glyph.color = new Color(_glyphHome.r, _glyphHome.g, _glyphHome.b, _glyphHome.a * caption);
+
         face.anchoredPosition = _faceHome + new Vector2(0f, -_heat.Offset);
+        face.localScale       = _faceScaleHome * _heat.Scale;
 
         TickBloom(deltaTime);
     }
@@ -163,9 +178,9 @@ public sealed class EmberButtonView : MonoBehaviour,
     // Keyboard and gamepad submit carry no pointer position, so the bloom comes from the middle.
     public void OnSubmit(BaseEventData eventData)
     {
-        _pressed     = true;
-        _pressLatch  = true;
-        _submitHold  = style.SubmitHold;
+        _pressed    = true;
+        _pressLatch = true;
+        _submitHold = style.SubmitHold;
         bloom.anchoredPosition = Vector2.zero;
         _bloomAge = 0f;
     }

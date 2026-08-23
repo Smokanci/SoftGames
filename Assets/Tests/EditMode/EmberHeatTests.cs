@@ -65,7 +65,7 @@ public class EmberHeatTests
 
         Assert.AreEqual(_style.HoverGlow, heat.Glow, 0.05f);
         Assert.AreEqual(_style.HoverRim, heat.Rim, 0.05f);
-        Assert.AreEqual(0f, heat.Offset, 0.05f);
+        Assert.AreEqual(-_style.HoverLift, heat.Offset, 0.05f);
     }
 
     [Test]
@@ -75,10 +75,12 @@ public class EmberHeatTests
         pressed.SetState(true, true, false, false);
         Run(pressed, 0.06f);
 
+        // Released to cold, not to hover: hover is the faster channel of the two, so measuring
+        // against it would be measuring the wrong thing.
         var released = new EmberHeat(_style);
         released.SetState(true, true, false, false);
         Run(released, 1f);
-        released.SetState(true, false, false, false);
+        released.SetState(false, false, false, false);
         Run(released, 0.06f);
 
         // The same elapsed time covers far more of the press than of the release, or a press that
@@ -174,5 +176,119 @@ public class EmberHeatTests
         }
 
         Assert.AreEqual(fast.Glow, slow.Glow, 0.02f);
+    }
+
+    [Test]
+    public void HoverArrivesFasterThanItLeaves()
+    {
+        var arriving = new EmberHeat(_style);
+        arriving.SetState(true, false, false, false);
+        Run(arriving, 0.06f);
+
+        var leaving = new EmberHeat(_style);
+        leaving.SetState(true, false, false, false);
+        Run(leaving, 1f);
+        leaving.SetState(false, false, false, false);
+        Run(leaving, 0.06f);
+
+        var span     = _style.HoverGlow - _style.NormalGlow;
+        var arrived  = (arriving.Glow - _style.NormalGlow) / span;
+        var departed = (_style.HoverGlow - leaving.Glow) / span;
+
+        // A highlight that arrives at the speed it leaves lands after the pointer has moved on.
+        Assert.Greater(arrived, departed);
+    }
+
+    [Test]
+    public void HoverOutrunsTheIdleBreathOnTheSameButton()
+    {
+        // The hovered button is also the breathing one, so hover has to clear the breath's own
+        // ceiling by a margin or there is no step for anyone to see.
+        var heat = new EmberHeat(_style);
+        heat.SetState(true, false, true, false);
+        Run(heat, 0.5f);
+
+        Assert.Greater(heat.Glow, _style.IdleHigh + 0.3f);
+    }
+
+    [Test]
+    public void HoverLiftsTheFaceSoThePressDipCrossesTheLine()
+    {
+        var heat = new EmberHeat(_style);
+        heat.SetState(true, false, false, false);
+        Run(heat, 0.5f);
+
+        Assert.AreEqual(-_style.HoverLift, heat.Offset, 0.05f);
+
+        heat.SetState(true, true, false, false);
+        Run(heat, 0.1f);
+
+        Assert.AreEqual(_style.PressOffset, heat.Offset, 0.2f);
+    }
+
+    [Test]
+    public void PressCancelsTheHoverScaleAndKeepsTheGlowSpread()
+    {
+        var heat = new EmberHeat(_style);
+        heat.SetState(true, false, false, false);
+        Run(heat, 0.5f);
+
+        Assert.AreEqual(_style.HoverScale, heat.Scale, 0.005f);
+        Assert.AreEqual(_style.HoverGlowSpread, heat.Spread, 0.01f);
+
+        heat.SetState(true, true, false, false);
+        Run(heat, 0.3f);
+
+        // The face drops back to its own size under the press, which is half of the dip's punch,
+        // while the pool of light under it stays wide.
+        Assert.AreEqual(1f, heat.Scale, 0.005f);
+        Assert.AreEqual(_style.HoverGlowSpread, heat.Spread, 0.01f);
+    }
+
+    [Test]
+    public void PressWashesTheRimWhiterThanHover()
+    {
+        var hovered = new EmberHeat(_style);
+        hovered.SetState(true, false, false, false);
+        Run(hovered, 0.5f);
+
+        var pressed = new EmberHeat(_style);
+        pressed.SetState(true, true, false, false);
+        Run(pressed, 0.5f);
+
+        Assert.AreEqual(_style.HoverWhiteMix, hovered.White, 0.01f);
+        Assert.AreEqual(_style.WhiteMix, pressed.White, 0.01f);
+        Assert.Greater(pressed.White, hovered.White);
+    }
+
+    [Test]
+    public void OnlyTheHoveredCaptionComesUpToFull()
+    {
+        var heat = new EmberHeat(_style);
+        Run(heat, 0.5f);
+
+        Assert.AreEqual(0f, heat.Caption, 0.01f);
+
+        heat.SetState(true, false, false, false);
+        Run(heat, 0.5f);
+
+        Assert.AreEqual(1f, heat.Caption, 0.01f);
+    }
+
+    [Test]
+    public void LockedDropsEveryHoverChannel()
+    {
+        var heat = new EmberHeat(_style);
+        heat.SetState(true, false, false, false);
+        Run(heat, 0.5f);
+
+        heat.SetState(true, false, false, true);
+        Run(heat, 1.5f);
+
+        Assert.AreEqual(1f, heat.Scale, 0.01f);
+        Assert.AreEqual(1f, heat.Spread, 0.01f);
+        Assert.AreEqual(0f, heat.White, 0.01f);
+        Assert.AreEqual(0f, heat.Caption, 0.01f);
+        Assert.AreEqual(0f, heat.Offset, 0.01f);
     }
 }

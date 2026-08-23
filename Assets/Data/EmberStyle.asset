@@ -13,18 +13,24 @@ MonoBehaviour:
   m_Name: EmberStyle
   m_EditorClassIdentifier: Game.Runtime::EmberStyle
   normalGlow: 0.4
-  hoverGlow: 0.95
+  hoverGlow: 1.5
   pressGlow: 1
   lockedGlow: 0.34
-  idleLow: 0.6
-  idleHigh: 0.85
+  idleLow: 0.52
+  idleHigh: 0.72
   glowIntensity: 0.6
+  hoverGlowSpread: 1.22
   normalRim: 0.28
-  hoverRim: 0.55
+  hoverRim: 0.9
   pressRim: 1
   whiteMix: 0.5
+  hoverWhiteMix: 0.45
+  captionRestAlpha: 0.75
   pressOffset: 2
+  hoverLift: 2
+  hoverScale: 1.02
   pressSeconds: 0.06
+  hoverSeconds: 0.07
   releaseSeconds: 0.32
   idlePeriod: 4.5
   settleFactor: 3

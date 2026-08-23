@@ -16,10 +16,10 @@ under the face, a rim that lights, and a burst of light at the point of contact.
 
 `EmberStyle` is the authored numbers and nothing else. `EmberHeat` is the press model: no
 `MonoBehaviour`, no scene, so an EditMode test drives a press, a release and a full idle cycle
-without play mode. `EmberButtonView` owns no timing of its own; it reads `Glow`, `Rim` and `Offset`
-and writes them onto three graphics. `EmberButtonGroup` decides which sibling is hot and whether
-input is allowed. Four types because they change for four different reasons — a retune touches only
-the first.
+without play mode. It chases seven channels — `Glow`, `Rim`, `Offset`, `Scale`, `Spread`, `White`
+and `Caption` — and `EmberButtonView` writes each of them onto a graphic. `EmberButtonGroup` decides
+which sibling is hot and whether input is allowed. Four types because they change for four different
+reasons — a retune touches only the first.
 
 ## One style asset
 
@@ -31,19 +31,27 @@ global.** A button that breathes at a different rate from its neighbour reads as
 as a highlight, so there is nothing per-button to author. The hue is the single exception, and it
 lives on the instance because the spec asks each task to own its colour.
 
-It also removes a class of drift the two-file version had: the view compares `_heat.Rim` against
-`HoverRim` and `PressRim` to decide how far to wash the rim toward white, and those are now the same
-fields the model chases rather than a second set that a retune could leave disagreeing.
+The rim's wash toward white is its own chased channel rather than something the view derives from
+`Rim`. Deriving it meant reading `Rim`'s position between `HoverRim` and `PressRim`, and once hover
+was raised close to press that span nearly closed — the derivation would have gone from a smooth
+ramp to a jump across a sliver. `White` says what it means and does not care how near the two levels
+sit.
 
-Two fields carry meaning a number cannot:
+Four fields carry meaning a number cannot:
 
-- **`settleFactor` defines what the durations mean.** `pressSeconds` and `releaseSeconds` are
-  "seconds to within about 5% of the target", and that sentence is only true at the authored
-  `settleFactor`. Raise it and every duration silently starts meaning a tighter approach than it
-  says.
+- **`settleFactor` defines what the durations mean.** `pressSeconds`, `hoverSeconds` and
+  `releaseSeconds` are "seconds to within about 5% of the target", and that sentence is only true at
+  the authored `settleFactor`. Raise it and every duration silently starts meaning a tighter approach
+  than it says.
 - **`bloomSpreadX` / `bloomSpreadY` are multiples of the face's own width and height**, not pixels.
   That is what lets one asset serve a wide menu button and a square pause button — a single fixed
   spread gives the wide one a circle that overshoots its ends.
+- **`hoverGlow` is not an alpha.** It multiplies into `glowIntensity` on the way to the graphic, so
+  it is free to go past 1 and does.
+- **`idleHigh` is a ceiling the hover has to clear.** The hovered button is also the breathing one,
+  so the step a person sees is `hoverGlow` minus wherever the breath happens to be. Raise `idleHigh`
+  toward `hoverGlow` and hovering stops registering, which is exactly how the first tuning here went
+  wrong. `EmberHeatTests.HoverOutrunsTheIdleBreathOnTheSameButton` holds the margin.
 
 `EmberHeat` takes the asset in its constructor and holds no `MonoBehaviour` dependency, so an
 EditMode test builds one with `ScriptableObject.CreateInstance` and drives a full press with no
@@ -65,6 +73,26 @@ at 144 fps, and `EmberHeatTests.FrameRateDoesNotChangeWhereItLands` holds that.
 
 `Time.unscaledDeltaTime` drives it: a button that stops answering because something scaled time
 reads as broken.
+
+## Hover is not just a brighter glow
+
+A glow that brightens is a step a person misses while their eye is on the pointer, so hover moves
+every channel at once and each one carries a different part of the message:
+
+- the **glow** brightens and, through `Spread`, widens the pool under the face;
+- the **rim** lights and washes part-way to white;
+- the **face lifts** by `hoverLift` and grows by `hoverScale`;
+- the **caption** comes up from `captionRestAlpha` to full, which is what makes the buttons nobody
+  is pointing at recede.
+
+Two of these exist for the press rather than for the hover. The lift means the press dip starts
+above the resting line and ends below it, so the same `pressOffset` buys twice the travel; the
+scale means the press has something to cancel, which lands harder than a shrink from rest.
+
+**Hover arrives faster than it leaves.** `hoverSeconds` is a fraction of `releaseSeconds` and that
+asymmetry is deliberate: a highlight that fades in at the speed it fades out has not finished
+arriving by the time the pointer has moved on, while a slow fade out is what keeps a fast sweep
+across a menu from strobing. `EmberHeatTests.HoverArrivesFasterThanItLeaves` holds it.
 
 ## One breathing button at a time
 
@@ -107,7 +135,7 @@ back to the menu finds the buttons already reset.
 ```
 EmberButton   CanvasGroup + Button (transition None) + EmberButtonView
 ├─ Glow       resting heat, additive, pooled under the face
-├─ Face       the panel that moves on press
+├─ Face       the panel that moves and scales on hover and press
 │  ├─ Rim     the outline that lights
 │  ├─ Label   TMP
 │  └─ Glyph   an icon instead of a word — inactive until an instance turns it on
@@ -122,7 +150,11 @@ needs). **Overriding anything else on an instance is the bug** — it is how one
 breathing out of step with the rest.
 
 `Glyph` is a child of `Face` rather than of the root so it dips with the press, and it carries no
-component of its own beyond the `Image`: the view never touches it, so a glyph is pure authoring.
+component of its own beyond the `Image`. The view holds a ref to it and to `Label` so it can fade
+both captions together — it scales the alpha each one was authored with rather than replacing the
+colour, so a glyph stays pure authoring in every respect but its opacity. **Both refs must be
+wired**, on a caption-only button as much as on a glyph-only one; the prefab wires them and an
+instance inherits them.
 
 Three invariants hold the prefab together:
 
