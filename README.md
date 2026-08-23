@@ -106,12 +106,28 @@ is fetched once and a failure is remembered, so a broken link costs one request 
 rather than one per line that speaker has, and every request carries an explicit timeout — WebGL
 otherwise inherits the browser's, which can run to minutes.
 
-**The conversation appears at once, in a scroll view.** A typewriter reveal would look livelier, but
-the brief asks for nothing timed here, and a timed reveal would put the failure banner behind a wait.
-There is no retry control either: the fetch runs once when the scene opens, so recovering from a
-failed load means going back to the menu and re-entering. That keeps the task on one code path
-instead of the re-entry guard, generation counter, and cache reset a retry button needs to be
-correct.
+**The conversation types itself out, one line at a time.** The payload arrives whole, so drawing it
+whole was the cheaper option; the reveal exists because a chat log that appears all at once reads as
+a screenshot rather than as a conversation, and the pacing is what lets an emoji or a portrait land
+as an event instead of as page furniture. It is not free: a reviewer waits out the whole script and
+there is no skip control. The reveal also earns its keep twice — every avatar starts downloading
+before the first character types, so the typing is the window the portraits have to arrive in, and a
+row that gets its image late swaps initials for a picture while the reader is still on an earlier
+line.
+
+**A row is revealed, never rebuilt.** `DialogueRowView` lays the bubble out against the finished
+line on its first frame and raises `maxVisibleCharacters` from zero, rather than growing the string a
+letter at a time. Growing the string would reflow the bubble on every character and split an emoji
+sprite tag down the middle; counting visible characters up leaves the layout untouched and brings
+each emoji in as one whole sprite.
+
+**Nothing timed sits in front of an error.** A dead request, a body that is not JSON, and a payload
+with no lines are three separate answers, each decided before the first character types and each
+raising its own banner. `MagicWordsRunner` only calls into the log once it has cleared the banner, so
+a wait can never stand between the reader and a failure message. There is no retry control either:
+the fetch runs once when the scene opens, so recovering from a failed load means going back to the
+menu and re-entering. That keeps the task on one code path instead of the re-entry guard, generation
+counter, and cache reset a retry button needs to be correct.
 
 ### Phoenix Flame — the colour order lives in the graph, not in a switch
 
@@ -163,14 +179,14 @@ git config core.hooksPath hooks
 
 ## Tests
 
-EditMode tests cover the pure logic. `Assets/Tests/PlayMode/` holds the three tests that need a
+EditMode tests cover the pure logic. `Assets/Tests/PlayMode/` holds the four tests that need a
 running player: one boots the bootstrap scene and checks the menu loads on top of it rather than
-replacing it; one enters Magic Words, leaves again while the fetch is still in flight, and fails if a
-cancelled request resumes into the unloaded scene; and one walks the Phoenix Flame colour cycle
-through the real button and asserts it loops back to orange. Between them they cover the
-additive-load contract the whole shell rests on, the teardown path every task inherits from it, and
-the one task whose behaviour lives in an asset rather than in code. Run them from
-**Window → General → Test Runner**, or headlessly with the editor closed:
+replacing it; two enter Magic Words and leave again — once while the fetch is still in flight, once
+mid-reveal — and fail if the cancelled work resumes into the unloaded scene; and one walks the
+Phoenix Flame colour cycle through the real button and asserts it loops back to orange. Between
+them they cover the additive-load contract the whole shell rests on, the teardown path every task
+inherits from it, and the one task whose behaviour lives in an asset rather than in code. Run them
+from **Window → General → Test Runner**, or headlessly with the editor closed:
 
 ```bash
 U="/Applications/Unity/Hub/Editor/$(awk '/^m_EditorVersion:/{print $2}' ProjectSettings/ProjectVersion.txt)/Unity.app/Contents/MacOS/Unity"; "$U" -batchmode -nographics -projectPath . -runTests -testPlatform EditMode -testResults Logs/edit-results.xml
