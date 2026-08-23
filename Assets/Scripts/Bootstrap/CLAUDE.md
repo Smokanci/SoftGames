@@ -67,9 +67,10 @@ runtime tint decides the hue, the same arrangement as every other generated text
 - **`Assets/SOAP/Events/_LoadSceneRequested.asset`** (`GameEventString`) carries a scene name.
   `SceneLoader` is the sole listener, reached through the `GameEventListenerString` beside it on
   `[Services]` — never a code subscription, per `.claude/rules/csharp-conventions.md`.
-  `SceneLoadRequest` is the sole raiser — put it on a `Button` and set the target scene on the same
-  component. It subscribes to its own `Button` in code, which is Unity UI rather than SOAP and so
-  falls outside that rule.
+  `SceneLoadRequest` is the sole raiser — put it on an `EmberButtonView` and set the target scene on
+  the same component. It listens to that view's `Committed` event, which fires one commit delay
+  after the click rather than on it, so the press is legible before the swap starts. That is a plain
+  C# event on this GameObject's own component, not a SOAP channel, so it falls outside that rule.
 - **`Assets/SOAP/Variables/_IsLoadingScene.asset`** (`BoolVariable`) is set for the duration of a
   swap. A request that arrives while it is set is **dropped, not queued** — that is deliberate, since
   the alternative is unloading a scene that is still loading. A double-click on a menu button

@@ -30,7 +30,7 @@ public sealed class MagicWordsExitTests
         // needs to answer, so the exit below lands while the request is still in flight.
         yield return null;
 
-        ExitTask();
+        yield return ExitTask();
         yield return WaitForActiveScene("Menu");
 
         // A continuation that outlived its component resumes when its request answers, which is a
@@ -74,7 +74,7 @@ public sealed class MagicWordsExitTests
             Assert.Ignore("The endpoint did not answer, so no reveal ever started.");
         }
 
-        ExitTask();
+        yield return ExitTask();
         yield return WaitForActiveScene("Menu");
 
         var watchUntil = Time.realtimeSinceStartup + LeakWatchSeconds;
@@ -101,12 +101,22 @@ public sealed class MagicWordsExitTests
     }
 
     // Exit lives inside the pause overlay, which starts inactive — so GameObject.Find cannot see it
-    // until the pause button has opened the panel. No frame is needed between the two: SetActive is
-    // immediate. The overlay also stops time, which is why everything this suite waits on is
-    // realtime or a bare frame yield rather than a scaled duration.
-    private static void ExitTask()
+    // until the pause button has opened the panel. EmberButtonView holds a click for its Commit
+    // Delay before the action goes out, so the overlay is not open on the frame the pause button is
+    // clicked and the wait below is not optional. It watches for the button rather than sleeping
+    // the delay, so retuning the delay does not reach in here. The overlay also stops time, which
+    // is why everything this suite waits on is realtime or a bare frame yield rather than a scaled
+    // duration.
+    private static IEnumerator ExitTask()
     {
         Click("PauseButton");
+
+        var deadline = Time.realtimeSinceStartup + LoadTimeoutSeconds;
+        while (GameObject.Find("ExitButton") == null && Time.realtimeSinceStartup < deadline)
+        {
+            yield return null;
+        }
+
         Click("ExitButton");
     }
 

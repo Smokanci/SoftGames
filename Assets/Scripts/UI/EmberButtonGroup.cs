@@ -11,7 +11,7 @@ public sealed class EmberButtonGroup : MonoBehaviour
 
     private EmberButtonView[] _views;
     private EmberButtonView   _committed;
-    private bool              _wasLoading;
+    private bool              _wasBusy;
 
     private void Awake()
     {
@@ -21,24 +21,45 @@ public sealed class EmberButtonGroup : MonoBehaviour
     private void Update()
     {
         var loading = isLoadingScene.Value;
-        if (!loading && _wasLoading)
-        {
-            _committed = null;
-        }
-        _wasLoading = loading;
 
+        // Before the busy test, so a press that starts and ends inside one frame still names its
+        // button. Read after it, the button that just committed would be locked instead of held.
         if (!loading)
         {
             TakePresses();
         }
+
+        // Busy starts at the click, not at the scene load: the view holds the click for its commit
+        // delay first, and leaving the siblings live through that window lets a second one be
+        // pressed. A press that raises no scene load — Resume, the colour button — ends the window
+        // when its hold does.
+        var busy = loading || AnyCommitting();
+        if (!busy && _wasBusy)
+        {
+            _committed = null;
+        }
+        _wasBusy = busy;
 
         var owner = idleGlow ? PickIdleOwner() : null;
 
         foreach (var view in _views)
         {
             view.SetIdleOwner(view == owner);
-            view.SetLoading(loading, view == _committed);
+            view.SetLoading(busy, view == _committed);
         }
+    }
+
+    private bool AnyCommitting()
+    {
+        foreach (var view in _views)
+        {
+            if (view.Committing)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void TakePresses()

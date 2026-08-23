@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 // Lives on TaskChrome rather than in the bootstrap scene. That prefab is in all three task scenes
 // and in none of the menu, so "the menu cannot be paused" needs no flag to say so.
@@ -10,25 +9,27 @@ using UnityEngine.UI;
 // and the overlay could then never be dismissed.
 public sealed class PauseMenu : MonoBehaviour
 {
-    [SerializeField] private GameObject  panel;
-    [SerializeField] private Button      pauseButton;
-    [SerializeField] private Button      resumeButton;
+    [SerializeField] private GameObject      panel;
+    [SerializeField] private EmberButtonView pauseButton;
+    [SerializeField] private EmberButtonView resumeButton;
 
     // The backdrop's hierarchy order already swallows clicks meant for the task. It does nothing
     // about EventSystem navigation, which would still walk the keyboard focus out of the overlay
     // and into the task's own buttons.
     [SerializeField] private CanvasGroup taskChrome;
 
+    // The views raise this one Commit Delay after the click, not on it, so both buttons finish
+    // their press before the screen changes under them.
     private void OnEnable()
     {
-        pauseButton.onClick.AddListener(Pause);
-        resumeButton.onClick.AddListener(Resume);
+        pauseButton.Committed += Pause;
+        resumeButton.Committed += Resume;
     }
 
     private void OnDisable()
     {
-        pauseButton.onClick.RemoveListener(Pause);
-        resumeButton.onClick.RemoveListener(Resume);
+        pauseButton.Committed -= Pause;
+        resumeButton.Committed -= Resume;
 
         // Exit is pressed while paused, so the scene unloads with time stopped. A zero left behind
         // would follow the player into the menu and into the next task, which reads as a hang.

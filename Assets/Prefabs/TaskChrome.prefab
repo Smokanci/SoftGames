@@ -187,8 +187,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.Runtime::PauseMenu
   panel: {fileID: 5885078010526241602}
-  pauseButton: {fileID: 6270838957885824922}
-  resumeButton: {fileID: 763662404864892258}
+  pauseButton: {fileID: 6439290259486149895}
+  resumeButton: {fileID: 343285639257772031}
   taskChrome: {fileID: 1712361562118922622}
 --- !u!1 &1011444455388981270
 GameObject:
@@ -964,17 +964,17 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 6472409612879591438}
   m_SourcePrefab: {fileID: 100100000, guid: b8d0d795f40af4a67a5102e6b9c7de68, type: 3}
---- !u!114 &763662404864892258 stripped
+--- !u!114 &343285639257772031 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1383990478393211474, guid: b8d0d795f40af4a67a5102e6b9c7de68, type: 3}
+  m_CorrespondingSourceObject: {fileID: 2120745247479654607, guid: b8d0d795f40af4a67a5102e6b9c7de68, type: 3}
   m_PrefabInstance: {fileID: 1850415297113925424}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7319469401126087440}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Script: {fileID: 11500000, guid: a8dc2d454b43e492d91eef90b3c4925a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+  m_EditorClassIdentifier: Game.Runtime::EmberButtonView
 --- !u!224 &7002035865225199477 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8683437532268353605, guid: b8d0d795f40af4a67a5102e6b9c7de68, type: 3}
@@ -1135,17 +1135,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8683437532268353605, guid: b8d0d795f40af4a67a5102e6b9c7de68, type: 3}
   m_PrefabInstance: {fileID: 4914151562065044936}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &6270838957885824922 stripped
+--- !u!114 &6439290259486149895 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1383990478393211474, guid: b8d0d795f40af4a67a5102e6b9c7de68, type: 3}
+  m_CorrespondingSourceObject: {fileID: 2120745247479654607, guid: b8d0d795f40af4a67a5102e6b9c7de68, type: 3}
   m_PrefabInstance: {fileID: 4914151562065044936}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Script: {fileID: 11500000, guid: a8dc2d454b43e492d91eef90b3c4925a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+  m_EditorClassIdentifier: Game.Runtime::EmberButtonView
 --- !u!1001 &8291413673006184934
 PrefabInstance:
   m_ObjectHideFlags: 0

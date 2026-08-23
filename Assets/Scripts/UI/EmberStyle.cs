@@ -81,6 +81,10 @@ public sealed class EmberStyle : ScriptableObject
     [SerializeField] private float bloomIntensity = 0.60f;
 
     [Header("Commit")]
+    [Tooltip("Seconds between the click and the action going out. The committed button's bloom is " +
+             "retimed to end on the same instant, so a scene swap never cuts one in flight.")]
+    [SerializeField] [Min(0.01f)] private float commitDelay = 0.16f;
+
     [Tooltip("Keyboard and gamepad submit carry no press and release, so the press is held this long.")]
     [SerializeField] private float submitHold = 0.12f;
 
@@ -118,6 +122,7 @@ public sealed class EmberStyle : ScriptableObject
     public float BloomSpreadY   => bloomSpreadY;
     public float BloomIntensity => bloomIntensity;
 
+    public float CommitDelay => commitDelay;
     public float SubmitHold  => submitHold;
     public float DimmedAlpha => dimmedAlpha;
 }

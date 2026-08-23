@@ -21,6 +21,9 @@ and `Caption` — and `EmberButtonView` writes each of them onto a graphic. `Emb
 which sibling is hot and whether input is allowed. Four types because they change for four different
 reasons — a retune touches only the first.
 
+The one piece of timing the view does own is the beat between the click and the action — see
+*The click waits* below. Everything else it draws, it reads.
+
 ## One style asset
 
 `EmberStyle` is a `ScriptableObject` holding every level, duration and proportion the look uses.
@@ -94,6 +97,29 @@ asymmetry is deliberate: a highlight that fades in at the speed it fades out has
 arriving by the time the pointer has moved on, while a slow fade out is what keeps a fast sweep
 across a menu from strobing. `EmberHeatTests.HoverArrivesFasterThanItLeaves` holds it.
 
+## The click waits
+
+`EmberButtonView` is the only listener on `Button.onClick`. It starts a `commitDelay` countdown and
+raises its own `Committed` event when that runs out; `SceneLoadRequest`, `VoidEventButton` and
+`PauseMenu` all listen there instead of on the `Button`. One owner of press timing, and nothing
+downstream has to know a delay exists.
+
+The delay alone would not be enough for a button that swaps scenes. `SceneLoader` unloads the
+current scene first, so the button that started the swap is destroyed a frame or two after the
+request — cutting whatever it was doing. What saves it is that **at the instant the request goes
+out, every channel except the bloom is holding a constant**, and a constant survives being cut. Only
+the bloom is still moving, so the view shortens its span on commit to end no later than the request:
+`Min(span, age + commitDelay)`. The clamp is the load-bearing part — a span pushed *out* would drop
+the bloom's own progress and make it jump backwards, so a bloom already ending before the commit is
+left alone.
+
+That is the invariant to keep if `commitDelay` is retuned: **the bloom ends no later than the action
+goes out**, and the action goes out no sooner than the press is legible.
+
+`Button.interactable` is untouched during the wait. Turning it off would take the button out of
+keyboard navigation and grey it through the `Button`'s own transition, which the prefab has disabled
+anyway. The siblings are locked instead, from the press — see *Busy starts at the press* below.
+
 ## One breathing button at a time
 
 Three buttons pulsing on their own timers reads as a slot machine. The idle glow is instead a single
@@ -120,13 +146,30 @@ below rest, dims through its `CanvasGroup` and stops taking raycasts. That is th
 this, the app heard you" signal — no bar, no spinner, no progress of any kind, because none of them
 would be telling the truth about an additive load that finishes in a frame or two.
 
-`EmberButtonGroup` learns the app is busy by reading `Assets/SOAP/Variables/_IsLoadingScene.asset`
-every frame. It **polls the variable rather than subscribing**, because subscribing to a SOAP channel
-in code is banned project-wide (see `.claude/rules/csharp-conventions.md`) and a `BoolVariable` is
-cheap to read. This is that variable's first reader outside the scene loader itself.
+`EmberButtonGroup` learns a scene is loading by reading
+`Assets/SOAP/Variables/_IsLoadingScene.asset` every frame. It **polls the variable rather than
+subscribing**, because subscribing to a SOAP channel in code is banned project-wide (see
+`.claude/rules/csharp-conventions.md`) and a `BoolVariable` is cheap to read. This is that
+variable's first reader outside the scene loader itself.
 
-The group clears its committed button on the loading edge back to false, so a task scene that exits
-back to the menu finds the buttons already reset.
+### Busy starts at the press
+
+The loading flag alone would leave the siblings live for one whole `commitDelay`, which is long
+enough to press a second one. So the group's idea of busy is **the flag or any child still holding
+its click**, and it reads that hold off `EmberButtonView.Committing`. The lock therefore begins on
+the press and runs unbroken into the load: the loader sets the flag inside the same frame the
+`Committed` event fires, so there is no frame between the two where the group would let go.
+
+A press that raises no scene load at all — Resume, the colour button — ends the window when its hold
+ends, which is the whole reason busy is not simply latched.
+
+Two ordering points hold it together:
+
+- **Presses are taken before the busy test, not after.** A press that starts and ends inside one
+  frame would otherwise leave `_committed` unset, and the button that just committed would be
+  locked and dimmed instead of held at press heat.
+- **The committed button is cleared on the falling edge of busy**, not of the flag, so a group whose
+  press never became a load still resets.
 
 ## The prefab contract
 

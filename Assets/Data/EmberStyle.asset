@@ -39,5 +39,6 @@ MonoBehaviour:
   bloomSpreadX: 1.2
   bloomSpreadY: 1.6
   bloomIntensity: 0.6
+  commitDelay: 0.16
   submitHold: 0.12
   dimmedAlpha: 0.34

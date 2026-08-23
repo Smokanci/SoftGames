@@ -1,10 +1,11 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-// Draws what EmberHeat computes, and nothing else. The Button's own transition is set to None on
-// the prefab: Color Tint fades one graphic and cannot move a face or scale a bloom, so leaving it
-// on would only fight this component over the same Image.
+// Draws what EmberHeat computes, and owns the beat between the click and the action. The Button's
+// own transition is set to None on the prefab: Color Tint fades one graphic and cannot move a face
+// or scale a bloom, so leaving it on would only fight this component over the same Image.
 [RequireComponent(typeof(Button))]
 [RequireComponent(typeof(CanvasGroup))]
 public sealed class EmberButtonView : MonoBehaviour,
@@ -23,6 +24,7 @@ public sealed class EmberButtonView : MonoBehaviour,
     [SerializeField] private Color hue = new Color(1f, 0.478f, 0.239f, 1f);
 
     private EmberHeat   _heat;
+    private Button      _button;
     private CanvasGroup _canvasGroup;
     private Image       _bloomImage;
     private Vector2     _faceHome;
@@ -31,6 +33,8 @@ public sealed class EmberButtonView : MonoBehaviour,
     private Color       _labelHome;
     private Color       _glyphHome;
     private float       _bloomAge;
+    private float       _bloomSpan;
+    private float       _commitCountdown;
     private float       _submitHold;
     private bool        _pointerOver;
     private bool        _pressed;
@@ -38,10 +42,19 @@ public sealed class EmberButtonView : MonoBehaviour,
     private bool        _alive;
     private bool        _held;
     private bool        _locked;
+    private bool        _committing;
     private bool        _pressLatch;
+
+    // Raised one Commit Delay after the click, not on the click. Whoever does the actual work
+    // listens here rather than on the Button, so there is one owner of press timing.
+    public event Action Committed;
 
     public bool PointerOver => _pointerOver;
     public bool Selected    => _selected;
+
+    // True through the hold between the click and Committed. The group reads it to lock the other
+    // buttons from the press rather than from the scene load, which starts a hold later.
+    public bool Committing => _committing;
 
     // True once per press, for whoever is counting them. The group polls this rather than taking
     // a callback, so a press that starts and ends inside one frame still registers.
@@ -70,20 +83,34 @@ public sealed class EmberButtonView : MonoBehaviour,
 
     private void Awake()
     {
-        _heat          = new EmberHeat(style);
-        _canvasGroup   = GetComponent<CanvasGroup>();
-        _bloomImage    = bloom.GetComponent<Image>();
+        _heat        = new EmberHeat(style);
+        _button      = GetComponent<Button>();
+        _canvasGroup = GetComponent<CanvasGroup>();
+        _bloomImage  = bloom.GetComponent<Image>();
         _faceHome      = face.anchoredPosition;
         _faceScaleHome = face.localScale;
         _glowHome      = glow.rectTransform.localScale;
-        _labelHome     = label.color;
-        _glyphHome     = glyph.color;
-        _bloomAge      = style.BloomSeconds;
+        _labelHome   = label.color;
+        _glyphHome   = glyph.color;
+        _bloomSpan   = style.BloomSeconds;
+        _bloomAge    = _bloomSpan;
+    }
+
+    private void OnEnable()
+    {
+        _button.onClick.AddListener(Commit);
+    }
+
+    private void OnDisable()
+    {
+        _button.onClick.RemoveListener(Commit);
+        _committing = false;
     }
 
     private void Update()
     {
         // Unscaled: a button that stops answering because something scaled time reads as broken.
+        // The pause overlay's own buttons are pressed at timeScale zero.
         var deltaTime = Time.unscaledDeltaTime;
 
         if (_submitHold > 0f)
@@ -95,7 +122,9 @@ public sealed class EmberButtonView : MonoBehaviour,
             }
         }
 
-        _heat.SetState(_pointerOver, _pressed || _held, _alive, _locked);
+        TickCommit(deltaTime);
+
+        _heat.SetState(_pointerOver, _pressed || _held || _committing, _alive, _locked);
         _heat.Tick(deltaTime);
 
         glow.color = new Color(hue.r, hue.g, hue.b, _heat.Glow * style.GlowIntensity);
@@ -115,15 +144,51 @@ public sealed class EmberButtonView : MonoBehaviour,
         TickBloom(deltaTime);
     }
 
+    // The click is held for one Commit Delay so the press has been seen before anything acts on
+    // it. A scene swap destroys this button a frame or two later, so the bloom is retimed to land
+    // on the same instant — after that every remaining value is holding a constant, and a constant
+    // survives being cut.
+    private void Commit()
+    {
+        if (_committing)
+        {
+            return;
+        }
+
+        _committing      = true;
+        _commitCountdown = style.CommitDelay;
+
+        // Only ever shortens. Pushing the span out would drop the bloom's own progress and make it
+        // jump backwards, and a bloom that already ends before the commit needs no help.
+        _bloomSpan = Mathf.Min(_bloomSpan, _bloomAge + style.CommitDelay);
+    }
+
+    private void TickCommit(float deltaTime)
+    {
+        if (!_committing)
+        {
+            return;
+        }
+
+        _commitCountdown -= deltaTime;
+        if (_commitCountdown > 0f)
+        {
+            return;
+        }
+
+        _committing = false;
+        Committed?.Invoke();
+    }
+
     private void TickBloom(float deltaTime)
     {
-        if (_bloomAge >= style.BloomSeconds)
+        if (_bloomAge >= _bloomSpan)
         {
             return;
         }
 
         _bloomAge += deltaTime;
-        var life = Mathf.Clamp01(_bloomAge / style.BloomSeconds);
+        var life = Mathf.Clamp01(_bloomAge / _bloomSpan);
 
         // Cubic ease-out: the bloom has to be most of its size almost immediately or the press
         // and the light look like two separate events.
@@ -139,7 +204,8 @@ public sealed class EmberButtonView : MonoBehaviour,
     {
         RectTransformUtility.ScreenPointToLocalPointInRectangle(face, screenPoint, eventCamera, out var local);
         bloom.anchoredPosition = local;
-        _bloomAge = 0f;
+        _bloomSpan = style.BloomSeconds;
+        _bloomAge  = 0f;
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -182,6 +248,7 @@ public sealed class EmberButtonView : MonoBehaviour,
         _pressLatch = true;
         _submitHold = style.SubmitHold;
         bloom.anchoredPosition = Vector2.zero;
-        _bloomAge = 0f;
+        _bloomSpan = style.BloomSeconds;
+        _bloomAge  = 0f;
     }
 }
