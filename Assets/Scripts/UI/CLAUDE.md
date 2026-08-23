@@ -3,7 +3,7 @@
 > **Status:** built and in use. Two things live here: the Ember button, and the app's type. Every
 > button in the app is an instance of `Assets/Prefabs/EmberButton.prefab` — the three menu entries,
 > the pause button and the pause overlay's Resume and Exit on `Assets/Prefabs/TaskChrome.prefab`,
-> and Phoenix Flame's colour button.
+> Phoenix Flame's colour button, and Ace of Shadows' fast-forward button.
 > `Assets/Tests/EditMode/EmberHeatTests.cs` drives the press model with no scene. Every tuned
 > level, duration and proportion lives on `Assets/Data/EmberStyle.asset`; the only number an
 > instance owns is its hue. None of them are quoted here.

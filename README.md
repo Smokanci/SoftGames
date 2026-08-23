@@ -72,6 +72,12 @@ vertical extent is a fixed number of world units everywhere and only the horizon
 stacks has to react to the viewport. One clamped formula covers a portrait phone and an ultrawide
 desktop window; there is no second code path and no breakpoint list.
 
+**A fast-forward button, because one card a second is over two minutes of watching.** The cadence is
+the brief and cannot be shortened, but nobody should have to wait out a full deal to see the
+completion message. The button toggles `Time.timeScale`, so the flights, the cadence and the
+background all speed up together, and it puts the scale back to 1 when the scene unloads — a warp
+left behind would follow the player into the next task.
+
 ### Magic Words — every gap in the data has one defined answer
 
 **Decision: the parse decides, the view only draws.** `DialogueScript.FromResponse` turns the raw

@@ -18,6 +18,11 @@ public sealed class PauseMenu : MonoBehaviour
     // and into the task's own buttons.
     [SerializeField] private CanvasGroup taskChrome;
 
+    // A task may have warped time before the pause — Ace of Shadows does, through TimeWarpToggle.
+    // Resuming to a flat 1 would cancel that warp on every pause, so the scale is put back where
+    // it was found.
+    private float _scaleBeforePause = 1f;
+
     // The views raise this one Commit Delay after the click, not on it, so both buttons finish
     // their press before the screen changes under them.
     private void OnEnable()
@@ -60,8 +65,14 @@ public sealed class PauseMenu : MonoBehaviour
 
     private void Pause()
     {
+        if (panel.activeSelf)
+        {
+            return;
+        }
+
         panel.SetActive(true);
         taskChrome.interactable = false;
+        _scaleBeforePause = Time.timeScale;
         Time.timeScale = 0f;
     }
 
@@ -69,6 +80,6 @@ public sealed class PauseMenu : MonoBehaviour
     {
         panel.SetActive(false);
         taskChrome.interactable = true;
-        Time.timeScale = 1f;
+        Time.timeScale = _scaleBeforePause;
     }
 }

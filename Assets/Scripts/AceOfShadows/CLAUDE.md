@@ -142,6 +142,29 @@ would never subscribe again and would stay silent for the whole session.
 `Start` primes `_sinceLastMove` to the full interval, so the first card leaves on the first frame
 instead of after a dead second.
 
-A full run is 144 seconds. To watch one quickly, set `moveInterval` and `moveDuration` down in the
-inspector before entering play mode. Keep the duration below the interval or more than one card is in
-the air at a time — which works, but stops matching the brief.
+A full run is one card a second, so watching the end of it means watching for over two minutes.
+`TimeWarpToggle`, on the fast-forward button under the pause button, is the way out: one press warps
+time, a second press puts it back, and the caption is formatted from the scale so it cannot claim a
+speed the button does not deliver.
+
+It writes **`Time.timeScale`** rather than a private factor on the runner, so the flights, the
+cadence and the ground all speed up together, and there is one value to put back rather than
+several. The flight still lands before the next card leaves, because both durations are scaled by
+the same number.
+
+**The runner starts at most one card per frame.** A warp past `frameRate * moveInterval` therefore
+buys nothing more — past that the frame rate is the slow part, not the cadence. That is the ceiling
+on `fastScale`.
+
+**`Time.timeScale` outlives this scene, and in the editor it outlives the play session.**
+`TimeWarpToggle.OnDisable` puts it back to 1, and unloading the scene and stopping play mode both
+reach that. `PauseMenu.OnDisable` does the same for its own zero — see
+`Assets/Scripts/Bootstrap/CLAUDE.md`.
+
+A warp survives a pause, because `PauseMenu` resumes to the scale it found rather than to a flat 1.
+Nothing can warp time while the clock is stopped: the button sits under the chrome's `CanvasGroup`,
+which the overlay makes non-interactable.
+
+The other way to watch a run quickly is still there — set `moveInterval` and `moveDuration` down in
+the inspector before entering play mode. Keep the duration below the interval or more than one card
+is in the air at a time, which works but stops matching the brief.

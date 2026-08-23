@@ -108,6 +108,10 @@ assignment freezes all of them; the Ember buttons and the FPS readout run on
 behind would follow the player into the menu and read as a hang, so `PauseMenu.OnDisable` restores
 the scale. Unloading the task scene is what disables it, so that runs on every exit path.
 
+**Resume goes back to the scale the pause found, not to a flat 1.** `PauseMenu` is not the only
+writer of `Time.timeScale` — Ace of Shadows' `TimeWarpToggle` warps it for the fast-forward button —
+and a resume that assumed 1 would quietly cancel that warp on every pause.
+
 The component sits on a GameObject that stays active and toggles a *child*, for the same reason
 `TaskMessageBanner` does: a component that switched itself off would stop reading the keyboard, and
 the overlay could then never be dismissed. Escape toggles it, through
