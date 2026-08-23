@@ -1,6 +1,6 @@
 # SoftGames Unity Developer Assignment
 
-> **Play it here:** _link pending — the WebGL build is not hosted yet._
+> **Play it here:** <https://smokanci.github.io/SoftGames/>
 
 Three self-contained showcases behind an in-game menu, built in Unity 6 and shipped as a WebGL
 build. Written by Cristian Smochina.
@@ -164,6 +164,27 @@ smoke visible, since smoke is drawn dark over a light ground rather than bright 
 controller graph. The PlayMode test presses the real button three times and asserts the animator
 settles on green, then blue, then orange again, and that each state's colour actually reached the
 emitters — which is the brief's requirement stated as an assertion.
+
+## Building and hosting
+
+The WebGL player settings that matter are Gzip compression with the **decompression fallback on**,
+and the `SoftGames` template from `Assets/WebGLTemplates/`. GitHub Pages serves the compressed files
+without a `Content-Encoding` header, so without that fallback the loader rejects them and the page
+never starts. The template replaces Unity's stock page with one whose canvas fills the window on a
+phone as well as a desktop, so the responsive requirement holds outside the canvas too.
+
+Build from the editor with **Build → WebGL**, or headlessly with the editor closed:
+
+```bash
+U="/Applications/Unity/Hub/Editor/$(awk '/^m_EditorVersion:/{print $2}' ProjectSettings/ProjectVersion.txt)/Unity.app/Contents/MacOS/Unity"; "$U" -batchmode -nographics -projectPath . -executeMethod Game.EditorTools.WebGLBuilder.Build -logFile Logs/webgl-build.log
+```
+
+Both write to `Builds/WebGL/`, which is gitignored. Publishing copies that folder onto the
+`gh-pages` branch, which is what the live link serves:
+
+```bash
+tools/deploy-webgl.sh
+```
 
 ## Running it
 

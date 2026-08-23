@@ -21,11 +21,27 @@ On scene templates: `Lit2DSceneTemplate.scenetemplate` is the right base for a s
 - A persistent **bootstrap scene** at build index 0 hosts the session-wide services (scene loader, FPS readout, global canvas) and is never unloaded. Menu and task scenes load **additively** on top of it and unload on exit. This is why `DontDestroyOnLoad` is banned outright — see `.claude/rules/code-conventions.md`.
 - **SOAP** (ScriptableObject variables, events, and object references) carries cross-system communication. Direct references stay inside a single system.
 - Each task keeps its **model separate from its view**: the logic that a test can drive headlessly on one side, the `MonoBehaviour`s that draw it on the other. That seam is what makes the assignment's testability criterion answerable.
-- **Three assemblies.** `Game.Runtime` (`Assets/Scripts/`, references `SOAP.Runtime` and `Unity.TextMeshPro`) holds all task code — put scripts there, not in the predefined assembly, because a test asmdef cannot reference `Assembly-CSharp`. `Game.Tests.EditMode` and `Game.Tests.PlayMode` live under `Assets/Tests/` and both reference `Game.Runtime`. They are **not** interchangeable: the PlayMode asmdef must have an empty `includePlatforms` and must not reference `UnityEditor.TestRunner`, or its tests are Editor-only and can never run in a player build.
+- **Three assemblies.** `Game.Runtime` (`Assets/Scripts/`, references `SOAP.Runtime` and `Unity.TextMeshPro`) holds all task code — put scripts there, not in the predefined assembly, because a test asmdef cannot reference `Assembly-CSharp`. `Game.Tests.EditMode` and `Game.Tests.PlayMode` live under `Assets/Tests/` and both reference `Game.Runtime`. They are **not** interchangeable: the PlayMode asmdef must have an empty `includePlatforms` and must not reference `UnityEditor.TestRunner`, or its tests are Editor-only and can never run in a player build. Editor-only tooling is the one thing outside that count: `Assets/Editor/` has no asmdef, so it lands in the predefined editor assembly, which is harmless because nothing references it and no test needs to.
 
 ## Tech stack pins
 
 Versions are pinned in `Packages/manifest.json` and `ProjectSettings/ProjectVersion.txt` — read them there rather than restating them here. Unity 6 and a WebGL target are fixed by the assignment.
+
+## Shipping the WebGL build
+
+`Assets/Editor/WebGLBuilder.cs` builds every enabled scene to `Builds/WebGL/` (gitignored), from the
+**Build → WebGL** menu item or from `-executeMethod Game.EditorTools.WebGLBuilder.Build` in batch
+mode. `tools/deploy-webgl.sh` copies that folder onto the `gh-pages` branch, which is what the live
+link in `README.md` serves.
+
+Two settings are load-bearing and easy to undo by accident:
+
+- **The decompression fallback must stay on.** GitHub Pages serves the compressed payload with no
+  `Content-Encoding` header, so without the fallback the loader refuses the files and the page never
+  starts. Compression format itself is free to change; the fallback is not.
+- **The WebGL template is `Assets/WebGLTemplates/SoftGames/`**, not Unity's stock page. It sizes the
+  canvas to the window instead of to a fixed pixel box, which is what carries the responsive
+  requirement outside the canvas. Switching back to `Default` puts a 960x600 letterbox on a phone.
 
 ## Subsystem docs (nested CLAUDE.md files)
 
