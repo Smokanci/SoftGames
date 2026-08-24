@@ -28,7 +28,9 @@ public sealed class AvatarLibrary : MonoBehaviour
             return null;
         }
 
-        using var request = UnityWebRequestTexture.GetTexture(url);
+        // nonReadable: nothing here samples pixels, and a readable texture keeps a second, CPU-side
+        // copy of every avatar for the life of the scene.
+        using var request = UnityWebRequestTexture.GetTexture(url, true);
         request.timeout = requestTimeoutSeconds;
 
         await WebRequests.SendAsync(request, destroyCancellationToken);
