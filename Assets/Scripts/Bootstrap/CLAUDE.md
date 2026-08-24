@@ -50,8 +50,10 @@ publishes them in `OnEnable`, so the ease starts in the same frame the scene com
 `EmberGround` **polls** both every frame and eases toward them rather than listening for a change.
 That is what turns a scene swap into a cross-fade instead of a cut, and it uses the same
 `1 - exp(-k·dt/seconds)` ease as `EmberHeat`, so tuning a swap and tuning a button press mean the
-same thing. Both halves of that ease are serialized here, on `EmberGround`; `EmberHeat` reads its
-own from `EmberStyle.asset`, and the two are set independently.
+same thing. The poll runs every frame; the three renderer writes behind it do not — that ease is
+asymptotic and would otherwise keep writing forever over a difference no display can show. Both
+halves of that ease are serialized here, on `EmberGround`; `EmberHeat` reads its own from
+`EmberStyle.asset`, and the two are set independently.
 `EmberButtonGroup` reads `_IsLoadingScene` the same way and for the same reason.
 
 **Every scene carries a `SceneGroundTint`, the menu included.** A screen with none would silently

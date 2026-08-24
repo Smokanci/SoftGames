@@ -15,6 +15,8 @@ public sealed class FlameTint : MonoBehaviour
     [SerializeField] private ParticleSystem[] layers;
 
     private Color[] _authored;
+    private Color   _pushed;
+    private bool    _hasPushed;
 
     private void Awake()
     {
@@ -30,6 +32,16 @@ public sealed class FlameTint : MonoBehaviour
     // LateUpdate, so the value the Animator wrote this frame is the one the emitters get.
     private void LateUpdate()
     {
+        // The Animator only writes tint during a transition, and a start colour reaches no already
+        // live particle, so re-sending the same colour every frame changes nothing on screen.
+        if (_hasPushed && tint == _pushed)
+        {
+            return;
+        }
+
+        _pushed    = tint;
+        _hasPushed = true;
+
         for (var i = 0; i < layers.Length; i++)
         {
             var main = layers[i].main;

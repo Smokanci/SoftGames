@@ -21,6 +21,14 @@ and `Caption` — and `EmberButtonView` writes each of them onto a graphic. `Emb
 which sibling is hot and whether input is allowed. Four types because they change for four different
 reasons — a retune touches only the first.
 
+**Every one of those writes is guarded on the value having changed, and must stay that way.** A
+`Graphic.color` setter calls `SetVerticesDirty()`, which marks the *whole canvas* for rebuild — and
+the only canvas in a task scene belongs to `TaskChrome`, which the Magic Words dialogue log is
+parented into. `EmberHeat` settles to a constant at rest, so an unguarded `Update` would rebuild
+every dialogue row 60 times a second for as long as the scene is open, driven by two buttons that
+are not moving. `CanvasGroup.alpha` in `SetLoading` is the same hazard and carries the same guard.
+`Color` and vector `==` compare with an epsilon, which is the tolerance wanted here anyway.
+
 The one piece of timing the view does own is the beat between the click and the action — see
 *The click waits* below. Everything else it draws, it reads.
 

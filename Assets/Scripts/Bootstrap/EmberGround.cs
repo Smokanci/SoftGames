@@ -34,6 +34,9 @@ public sealed class EmberGround : MonoBehaviour
 
     private Color _tint;
     private Color _fill;
+    private Color _appliedTint;
+    private Color _appliedFill;
+    private bool  _applied;
 
     private void OnEnable()
     {
@@ -55,15 +58,37 @@ public sealed class EmberGround : MonoBehaviour
         var approach = 1f - Mathf.Exp(-settleFactor * Time.unscaledDeltaTime / easeSeconds);
         _tint = Color.Lerp(_tint, tint.Value, approach);
         _fill = Color.Lerp(_fill, fill.Value, approach);
+
+        // Still polled, because the ease is what makes a swap cross-fade. But the ease is
+        // asymptotic, so without this it would keep writing three renderers forever over a
+        // difference no display can show. Colour == compares with an epsilon.
+        if (_applied && _tint == _appliedTint && _fill == _appliedFill)
+        {
+            return;
+        }
+
         Apply();
     }
 
     private void Apply()
     {
+        _appliedTint = _tint;
+        _appliedFill = _fill;
+        _applied     = true;
+
         flat.color = _fill;
         bloom.color = new Color(_tint.r, _tint.g, _tint.b, bloomIntensity);
 
         var main = motes.main;
         main.startColor = new Color(_tint.r * moteIntensity, _tint.g * moteIntensity, _tint.b * moteIntensity, 1f);
     }
+
+#if UNITY_EDITOR
+    // Both intensities are read inside Apply and are not part of the settle comparison, so without
+    // this a slider moved in play mode would not land until the next scene swap.
+    private void OnValidate()
+    {
+        _applied = false;
+    }
+#endif
 }

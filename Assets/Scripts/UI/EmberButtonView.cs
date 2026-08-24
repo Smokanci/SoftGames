@@ -44,6 +44,13 @@ public sealed class EmberButtonView : MonoBehaviour,
     private bool        _locked;
     private bool        _committing;
     private bool        _pressLatch;
+    private Color       _lastGlow;
+    private Color       _lastRim;
+    private Color       _lastLabel;
+    private Color       _lastGlyph;
+    private Vector3     _lastGlowScale;
+    private Vector2     _lastFacePos;
+    private Vector3     _lastFaceScale;
 
     // Raised one Commit Delay after the click, not on the click. Whoever does the actual work
     // listens here rather than on the Button, so there is one owner of press timing.
@@ -77,8 +84,18 @@ public sealed class EmberButtonView : MonoBehaviour,
         _held   = loading && committed;
         _locked = loading && !committed;
 
-        _canvasGroup.alpha          = _locked ? style.DimmedAlpha : 1f;
-        _canvasGroup.blocksRaycasts = !loading;
+        // The group calls this every frame for every button. A CanvasGroup alpha write dirties the
+        // group's whole subtree, so it is only worth making when the value actually moves.
+        var alpha = _locked ? style.DimmedAlpha : 1f;
+        if (!Mathf.Approximately(alpha, _canvasGroup.alpha))
+        {
+            _canvasGroup.alpha = alpha;
+        }
+
+        if (_canvasGroup.blocksRaycasts == loading)
+        {
+            _canvasGroup.blocksRaycasts = !loading;
+        }
     }
 
     private void Awake()
@@ -92,6 +109,17 @@ public sealed class EmberButtonView : MonoBehaviour,
         _glowHome      = glow.rectTransform.localScale;
         _labelHome   = label.color;
         _glyphHome   = glyph.color;
+
+        // Seeded from the graphics, not left at default, so the change guards in Update are exact
+        // from the first frame instead of writing once to establish a baseline.
+        _lastGlow      = glow.color;
+        _lastRim       = rim.color;
+        _lastLabel     = _labelHome;
+        _lastGlyph     = _glyphHome;
+        _lastGlowScale = _glowHome;
+        _lastFacePos   = _faceHome;
+        _lastFaceScale = _faceScaleHome;
+
         _bloomSpan   = style.BloomSeconds;
         _bloomAge    = _bloomSpan;
     }
@@ -127,21 +155,54 @@ public sealed class EmberButtonView : MonoBehaviour,
         _heat.SetState(_pointerOver, _pressed || _held || _committing, _alive, _locked);
         _heat.Tick(deltaTime);
 
-        glow.color = new Color(hue.r, hue.g, hue.b, _heat.Glow * style.GlowIntensity);
-        glow.rectTransform.localScale = _glowHome * _heat.Spread;
+        // Each Graphic.color setter marks the whole canvas dirty, and the canvas belongs to
+        // TaskChrome, which the Magic Words dialogue log is parented into. EmberHeat holds a
+        // constant once the button settles, so without these guards two idle buttons would rebuild
+        // every dialogue row for as long as the scene is open. Colour and vector == compare with an
+        // epsilon, which is the tolerance wanted here anyway.
+        SetGraphicColor(glow, new Color(hue.r, hue.g, hue.b, _heat.Glow * style.GlowIntensity), ref _lastGlow);
+
+        var glowScale = _glowHome * _heat.Spread;
+        if (glowScale != _lastGlowScale)
+        {
+            _lastGlowScale                = glowScale;
+            glow.rectTransform.localScale = glowScale;
+        }
 
         var rimColor = Color.Lerp(hue, Color.white, _heat.White);
         rimColor.a = _heat.Rim;
-        rim.color = rimColor;
+        SetGraphicColor(rim, rimColor, ref _lastRim);
 
         var caption = Mathf.Lerp(style.CaptionRestAlpha, 1f, _heat.Caption);
-        label.color = new Color(_labelHome.r, _labelHome.g, _labelHome.b, _labelHome.a * caption);
-        glyph.color = new Color(_glyphHome.r, _glyphHome.g, _glyphHome.b, _glyphHome.a * caption);
+        SetGraphicColor(label, new Color(_labelHome.r, _labelHome.g, _labelHome.b, _labelHome.a * caption), ref _lastLabel);
+        SetGraphicColor(glyph, new Color(_glyphHome.r, _glyphHome.g, _glyphHome.b, _glyphHome.a * caption), ref _lastGlyph);
 
-        face.anchoredPosition = _faceHome + new Vector2(0f, -_heat.Offset);
-        face.localScale       = _faceScaleHome * _heat.Scale;
+        var facePos = _faceHome + new Vector2(0f, -_heat.Offset);
+        if (facePos != _lastFacePos)
+        {
+            _lastFacePos          = facePos;
+            face.anchoredPosition = facePos;
+        }
+
+        var faceScale = _faceScaleHome * _heat.Scale;
+        if (faceScale != _lastFaceScale)
+        {
+            _lastFaceScale  = faceScale;
+            face.localScale = faceScale;
+        }
 
         TickBloom(deltaTime);
+    }
+
+    private void SetGraphicColor(Graphic target, Color value, ref Color last)
+    {
+        if (value == last)
+        {
+            return;
+        }
+
+        last         = value;
+        target.color = value;
     }
 
     // The click is held for one Commit Delay so the press has been seen before anything acts on

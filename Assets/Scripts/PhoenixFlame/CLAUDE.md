@@ -30,7 +30,9 @@ ordinary `Color` on a `MonoBehaviour` and that component pushes the value into t
 - The clips animate `FlameTint.tint`. Nothing else writes it.
 - `Awake` captures each listed system's authored `main.startColor.color`, and `LateUpdate` writes
   `tint * authored` back. Each layer therefore keeps its own brightness and alpha and only the hue
-  moves. `LateUpdate` so the emitters get the value the Animator wrote *this* frame.
+  moves. `LateUpdate` so the emitters get the value the Animator wrote *this* frame. The write is
+  guarded on `tint` having actually changed — the Animator only moves it during a transition, and a
+  start colour reaches no already-live particle, so re-sending the same colour changes nothing.
 - **Membership of the `layers` array is the "does this layer recolour" decision.** There is no
   per-layer weight. Smoke is left out, which is why it holds its authored colour at every hue.
 - **Every listed system's start colour must be in Constant mode.** A gradient or a random range
@@ -43,8 +45,8 @@ colour burns off the top. Watching the two hues coexist mid-blend is the cleares
 transition is real, and it is visible in any screenshot taken during a press.
 
 `FlameColorCycle` is the other half: one public method that pulls the trigger. Two small components
-rather than one, because they change for different reasons — one pushes a value every frame, the
-other answers an event.
+rather than one, because they change for different reasons — one carries an animated value into the
+emitters, the other answers an event.
 
 ## The four layers
 
