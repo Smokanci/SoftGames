@@ -167,11 +167,12 @@ emitters — which is the brief's requirement stated as an assertion.
 
 ## Building and hosting
 
-The WebGL player settings that matter are Gzip compression with the **decompression fallback on**,
-and the `SoftGames` template from `Assets/WebGLTemplates/`. GitHub Pages serves the compressed files
-without a `Content-Encoding` header, so without that fallback the loader rejects them and the page
-never starts. The template replaces Unity's stock page with one whose canvas fills the window on a
-phone as well as a desktop, so the responsive requirement holds outside the canvas too.
+The WebGL player settings that matter are the **decompression fallback on** — whatever the
+compression format is set to — and the `SoftGames` template from `Assets/WebGLTemplates/`. GitHub
+Pages serves the compressed files without a `Content-Encoding` header, so without that fallback the
+loader rejects them and the page never starts. The template replaces Unity's stock page with one
+whose canvas fills the window on a phone as well as a desktop, so the responsive requirement holds
+outside the canvas too.
 
 Build from the editor with **Build → WebGL**, or headlessly with the editor closed:
 
