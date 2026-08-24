@@ -113,8 +113,8 @@ without a scene, which is the point.
 Don't introduce `static Instance { get; }` accessors, `GetInstance()` static methods, or
 `static List<T> Active` registries for project runtime types. Cross-system runtime discovery goes
 through SOAP — pick whichever fits the shape: `GenericVariable<T>` / `BoolVariable` for shared state,
-`GameEvent<T>` for fan-out, `GameObjectReference` for a single discoverable GO. For
-runtime-`AddComponent` paths, instantiate the GO inactive, set the ref via a public setter, then
+`GameEvent<T>` for fan-out. For runtime-`AddComponent` paths, instantiate the GO inactive, set the
+ref via a public setter, then
 `SetActive(true)` so `OnEnable` sees the wired ref. The only acceptable static state is **Editor-only**
 and pure helpers with no instance state.
 
@@ -138,10 +138,10 @@ into a task scene, because the task scene isn't loaded when the menu wires up.
 
 ### No defensive null checks — the five carve-outs
 
-Don't guard refs that should be wired (serialized fields, `GetComponent` results, SOAP
-`GameObjectReference.gameObject`, state set by lifecycle transitions). Let `NullReferenceException`
-surface — it points at the broken wire. If a null check feels needed because the ref might genuinely be
-null in a legitimate path, the fix is usually to **set the ref correctly at the transition**, not to
+Don't guard refs that should be wired (serialized fields, `GetComponent` results, a SOAP asset ref,
+state set by lifecycle transitions). Let `NullReferenceException` surface — it points at the broken
+wire. If a null check feels needed because the ref might genuinely be null in a legitimate path, the
+fix is usually to **set the ref correctly at the transition**, not to
 guard every read.
 
 **The test is: would deleting this guard cause anything worse than a clean `NullReferenceException`
@@ -162,8 +162,8 @@ Five cases pass the test; nothing else does:
 4. **Editor-time tolerance** — `OnValidate` or editor-only code, where a half-authored asset
    legitimately has unset refs and an NRE per keystroke is noise, not signal. Runtime code gets no
    equivalent.
-5. **SOAP ref not yet published** — a `GameObjectReference.gameObject` (or equivalent
-   runtime-published SOAP value) read from a callback that can fire before its publisher's `OnEnable`:
+5. **SOAP ref not yet published** — a runtime-published SOAP value (a `ColorVariable` a scene has
+   yet to write, say) read from a callback that can fire before its publisher's `OnEnable`:
    `[ExecuteAlways]` paths, anything ticking before `Start`, and — in this project specifically —
    anything in a scene that was just loaded additively, where the other scene's publishers may not
    have run yet. This is "wired but not populated *this frame*", which is a different failure from
