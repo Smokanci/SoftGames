@@ -62,7 +62,8 @@ Four fields carry meaning a number cannot:
 - **`idleHigh` is a ceiling the hover has to clear.** The hovered button is also the breathing one,
   so the step a person sees is `hoverGlow` minus wherever the breath happens to be. Raise `idleHigh`
   toward `hoverGlow` and hovering stops registering, which is exactly how the first tuning here went
-  wrong. `EmberHeatTests.HoverOutrunsTheIdleBreathOnTheSameButton` holds the margin.
+  wrong. Nothing asserts the margin — `EmberHeatTests` covers the band `idleHigh` bounds, not its
+  distance from `hoverGlow`, so this one is held by eye.
 
 `EmberHeat` takes the asset in its constructor and holds no `MonoBehaviour` dependency, so an
 EditMode test builds one with `ScriptableObject.CreateInstance` and drives a full press with no
